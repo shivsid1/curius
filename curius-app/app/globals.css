@@ -1,0 +1,216 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  DESIGN ETHOS: Curius
+  - Scholarly, Curated, Precise, Inviting, Terminal-Hybrid
+  - Blue fountain pen on aged cream paper meets command-line precision
+  - Anti-ethos: Generic SaaS, floating orbs, AI purple gradients
+*/
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Typography */
+  --font-sans: var(--font-serif);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+  --font-handwritten: var(--font-handwritten);
+
+  /* Curius Design Tokens */
+  --color-cream: var(--cream);
+  --color-cream-light: var(--cream-light);
+  --color-cream-dark: var(--cream-dark);
+  --color-ink: var(--ink);
+  --color-ink-light: var(--ink-light);
+  --color-ink-muted: var(--ink-muted);
+  --color-terminal-cyan: var(--terminal-cyan);
+  --color-terminal-green: var(--terminal-green);
+
+  /* Shadcn mappings */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* Curius Cream Paper Palette */
+  --cream: #FFFDF7;
+  --cream-light: #FFFEF9;
+  --cream-dark: #FDF8EC;
+  --cream-border: #E8DFC8;
+
+  /* Curius Blue Ink Palette */
+  --ink: #1A365D;
+  --ink-light: #4A6FA5;
+  --ink-muted: #7B9ECE;
+
+  /* Terminal Accents */
+  --terminal-cyan: #00D4FF;
+  --terminal-green: #00FF41;
+
+  /* Map to shadcn tokens */
+  --background: #FFFDF7;
+  --foreground: #1A365D;
+  --card: #FDF8EC;
+  --card-foreground: #1A365D;
+  --popover: #FFFDF7;
+  --popover-foreground: #1A365D;
+  --primary: #1A365D;
+  --primary-foreground: #FFFDF7;
+  --secondary: #FDF8EC;
+  --secondary-foreground: #1A365D;
+  --muted: #F5F0E6;
+  --muted-foreground: #7B9ECE;
+  --accent: #E8DFC8;
+  --accent-foreground: #1A365D;
+  --destructive: #B91C1C;
+  --border: #E8DFC8;
+  --input: #E8DFC8;
+  --ring: #4A6FA5;
+
+  /* Charts use terminal colors */
+  --chart-1: #00D4FF;
+  --chart-2: #4A6FA5;
+  --chart-3: #00FF41;
+  --chart-4: #1A365D;
+  --chart-5: #7B9ECE;
+
+  /* Sidebar */
+  --sidebar: #FDF8EC;
+  --sidebar-foreground: #1A365D;
+  --sidebar-primary: #1A365D;
+  --sidebar-primary-foreground: #FFFDF7;
+  --sidebar-accent: #E8DFC8;
+  --sidebar-accent-foreground: #1A365D;
+  --sidebar-border: #E8DFC8;
+  --sidebar-ring: #4A6FA5;
+}
+
+.dark {
+  /* Dark mode: Invert to terminal-first with paper accents */
+  --cream: #0F1419;
+  --cream-light: #1A2332;
+  --cream-dark: #0A0E14;
+  --cream-border: #2D3748;
+
+  --ink: #E2E8F0;
+  --ink-light: #A0AEC0;
+  --ink-muted: #718096;
+
+  --background: #0F1419;
+  --foreground: #E2E8F0;
+  --card: #1A2332;
+  --card-foreground: #E2E8F0;
+  --popover: #1A2332;
+  --popover-foreground: #E2E8F0;
+  --primary: #00D4FF;
+  --primary-foreground: #0F1419;
+  --secondary: #2D3748;
+  --secondary-foreground: #E2E8F0;
+  --muted: #2D3748;
+  --muted-foreground: #718096;
+  --accent: #2D3748;
+  --accent-foreground: #E2E8F0;
+  --destructive: #F87171;
+  --border: #2D3748;
+  --input: #2D3748;
+  --ring: #00D4FF;
+
+  --sidebar: #1A2332;
+  --sidebar-foreground: #E2E8F0;
+  --sidebar-primary: #00D4FF;
+  --sidebar-primary-foreground: #0F1419;
+  --sidebar-accent: #2D3748;
+  --sidebar-accent-foreground: #E2E8F0;
+  --sidebar-border: #2D3748;
+  --sidebar-ring: #00D4FF;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-serif), Georgia, serif;
+  }
+}
+
+/* Curius Custom Utilities */
+@layer utilities {
+  /* Handwritten text style */
+  .font-handwritten {
+    font-family: var(--font-handwritten), cursive;
+  }
+
+  /* Terminal/monospace style */
+  .font-terminal {
+    font-family: var(--font-mono), monospace;
+  }
+
+  /* Serif for body text */
+  .font-scholarly {
+    font-family: var(--font-serif), Georgia, serif;
+  }
+
+  /* Paper shadow for cards */
+  .shadow-paper {
+    box-shadow:
+      0 1px 3px rgba(26, 54, 93, 0.08),
+      0 4px 12px rgba(26, 54, 93, 0.04);
+  }
+
+  /* Sketchy border effect */
+  .border-sketchy {
+    border-radius: 8px 6px 10px 7px;
+  }
+
+  /* Left accent border (terminal style) */
+  .border-accent-left {
+    border-left: 3px solid var(--ink-light);
+  }
+
+  /* Terminal glow effect */
+  .glow-terminal {
+    text-shadow: 0 0 10px var(--terminal-cyan);
+  }
+}

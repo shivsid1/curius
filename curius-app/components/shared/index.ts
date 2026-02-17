@@ -1,0 +1,1 @@
+export { DomainFavicon } from './DomainFavicon';
