@@ -5,22 +5,21 @@
 
 /*
   DESIGN ETHOS: Curius
-  - Scholarly, Curated, Precise, Inviting, Terminal-Hybrid
-  - Blue fountain pen on aged cream paper meets command-line precision
-  - Anti-ethos: Generic SaaS, floating orbs, AI purple gradients
+  Curated, Discerning, Warm, Unhurried, Literary
+  A quiet reading room. Rich typography on warm paper.
+  Every element earns its place.
+  Anti-ethos: Terminal aesthetic, cold SaaS, visual clutter
 */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* Typography */
   --font-sans: var(--font-serif);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
   --font-handwritten: var(--font-handwritten);
 
-  /* Curius Design Tokens */
   --color-cream: var(--cream);
   --color-cream-light: var(--cream-light);
   --color-cream-dark: var(--cream-dark);
@@ -30,7 +29,6 @@
   --color-terminal-cyan: var(--terminal-cyan);
   --color-terminal-green: var(--terminal-green);
 
-  /* Shadcn mappings */
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -70,99 +68,98 @@
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 
-  /* Curius Cream Paper Palette */
-  --cream: #FFFDF7;
-  --cream-light: #FFFEF9;
-  --cream-dark: #FDF8EC;
-  --cream-border: #E8DFC8;
+  /* Warm Paper -- not yellow-cream, just warm white */
+  --cream: #FAFAF8;
+  --cream-light: #FDFDFC;
+  --cream-dark: #F3F3F0;
+  --cream-border: #E4E4E0;
 
-  /* Curius Blue Ink Palette */
-  --ink: #1A365D;
-  --ink-light: #4A6FA5;
-  --ink-muted: #7B9ECE;
+  /* Rich Ink -- warm near-black, not blue */
+  --ink: #1C1917;
+  --ink-light: #57534E;
+  --ink-muted: #A8A29E;
 
-  /* Terminal Accents */
-  --terminal-cyan: #00D4FF;
-  --terminal-green: #00FF41;
+  /* Editorial accent -- warm amber */
+  --terminal-cyan: #B45309;
+  --terminal-green: #D97706;
 
-  /* Map to shadcn tokens */
-  --background: #FFFDF7;
-  --foreground: #1A365D;
-  --card: #FDF8EC;
-  --card-foreground: #1A365D;
-  --popover: #FFFDF7;
-  --popover-foreground: #1A365D;
-  --primary: #1A365D;
-  --primary-foreground: #FFFDF7;
-  --secondary: #FDF8EC;
-  --secondary-foreground: #1A365D;
-  --muted: #F5F0E6;
-  --muted-foreground: #7B9ECE;
-  --accent: #E8DFC8;
-  --accent-foreground: #1A365D;
-  --destructive: #B91C1C;
-  --border: #E8DFC8;
-  --input: #E8DFC8;
-  --ring: #4A6FA5;
+  /* Shadcn tokens */
+  --background: #FAFAF8;
+  --foreground: #1C1917;
+  --card: #FFFFFF;
+  --card-foreground: #1C1917;
+  --popover: #FFFFFF;
+  --popover-foreground: #1C1917;
+  --primary: #1C1917;
+  --primary-foreground: #FAFAF8;
+  --secondary: #F3F3F0;
+  --secondary-foreground: #1C1917;
+  --muted: #F3F3F0;
+  --muted-foreground: #A8A29E;
+  --accent: #F3F3F0;
+  --accent-foreground: #1C1917;
+  --destructive: #DC2626;
+  --border: #E7E5E4;
+  --input: #E7E5E4;
+  --ring: #57534E;
 
-  /* Charts use terminal colors */
-  --chart-1: #00D4FF;
-  --chart-2: #4A6FA5;
-  --chart-3: #00FF41;
-  --chart-4: #1A365D;
-  --chart-5: #7B9ECE;
+  /* Charts -- warm editorial palette */
+  --chart-1: #B45309;
+  --chart-2: #1C1917;
+  --chart-3: #57534E;
+  --chart-4: #92400E;
+  --chart-5: #A8A29E;
 
   /* Sidebar */
-  --sidebar: #FDF8EC;
-  --sidebar-foreground: #1A365D;
-  --sidebar-primary: #1A365D;
-  --sidebar-primary-foreground: #FFFDF7;
-  --sidebar-accent: #E8DFC8;
-  --sidebar-accent-foreground: #1A365D;
-  --sidebar-border: #E8DFC8;
-  --sidebar-ring: #4A6FA5;
+  --sidebar: #F3F3F0;
+  --sidebar-foreground: #1C1917;
+  --sidebar-primary: #1C1917;
+  --sidebar-primary-foreground: #FAFAF8;
+  --sidebar-accent: #E7E5E4;
+  --sidebar-accent-foreground: #1C1917;
+  --sidebar-border: #E7E5E4;
+  --sidebar-ring: #57534E;
 }
 
 .dark {
-  /* Dark mode: Invert to terminal-first with paper accents */
-  --cream: #0F1419;
-  --cream-light: #1A2332;
-  --cream-dark: #0A0E14;
-  --cream-border: #2D3748;
+  --cream: #171412;
+  --cream-light: #1C1917;
+  --cream-dark: #0C0A09;
+  --cream-border: #292524;
 
-  --ink: #E2E8F0;
-  --ink-light: #A0AEC0;
-  --ink-muted: #718096;
+  --ink: #F5F5F4;
+  --ink-light: #A8A29E;
+  --ink-muted: #78716C;
 
-  --background: #0F1419;
-  --foreground: #E2E8F0;
-  --card: #1A2332;
-  --card-foreground: #E2E8F0;
-  --popover: #1A2332;
-  --popover-foreground: #E2E8F0;
-  --primary: #00D4FF;
-  --primary-foreground: #0F1419;
-  --secondary: #2D3748;
-  --secondary-foreground: #E2E8F0;
-  --muted: #2D3748;
-  --muted-foreground: #718096;
-  --accent: #2D3748;
-  --accent-foreground: #E2E8F0;
-  --destructive: #F87171;
-  --border: #2D3748;
-  --input: #2D3748;
-  --ring: #00D4FF;
+  --background: #0C0A09;
+  --foreground: #F5F5F4;
+  --card: #1C1917;
+  --card-foreground: #F5F5F4;
+  --popover: #1C1917;
+  --popover-foreground: #F5F5F4;
+  --primary: #F5F5F4;
+  --primary-foreground: #0C0A09;
+  --secondary: #292524;
+  --secondary-foreground: #F5F5F4;
+  --muted: #292524;
+  --muted-foreground: #78716C;
+  --accent: #292524;
+  --accent-foreground: #F5F5F4;
+  --destructive: #EF4444;
+  --border: #292524;
+  --input: #292524;
+  --ring: #D97706;
 
-  --sidebar: #1A2332;
-  --sidebar-foreground: #E2E8F0;
-  --sidebar-primary: #00D4FF;
-  --sidebar-primary-foreground: #0F1419;
-  --sidebar-accent: #2D3748;
-  --sidebar-accent-foreground: #E2E8F0;
-  --sidebar-border: #2D3748;
-  --sidebar-ring: #00D4FF;
+  --sidebar: #1C1917;
+  --sidebar-foreground: #F5F5F4;
+  --sidebar-primary: #D97706;
+  --sidebar-primary-foreground: #0C0A09;
+  --sidebar-accent: #292524;
+  --sidebar-accent-foreground: #F5F5F4;
+  --sidebar-border: #292524;
+  --sidebar-ring: #D97706;
 }
 
 @layer base {
@@ -171,46 +168,74 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-serif), Georgia, serif;
+    font-family: var(--font-serif), Georgia, 'Times New Roman', serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.011em;
+    line-height: 1.6;
   }
 }
 
-/* Curius Custom Utilities */
 @layer utilities {
-  /* Handwritten text style */
   .font-handwritten {
     font-family: var(--font-handwritten), cursive;
+    letter-spacing: 0;
   }
 
-  /* Terminal/monospace style */
   .font-terminal {
     font-family: var(--font-mono), monospace;
+    font-size: 0.85em;
+    letter-spacing: -0.02em;
   }
 
-  /* Serif for body text */
   .font-scholarly {
     font-family: var(--font-serif), Georgia, serif;
   }
 
-  /* Paper shadow for cards */
+  /* Soft card shadow */
   .shadow-paper {
     box-shadow:
-      0 1px 3px rgba(26, 54, 93, 0.08),
-      0 4px 12px rgba(26, 54, 93, 0.04);
+      0 1px 2px rgba(28, 25, 23, 0.04),
+      0 1px 3px rgba(28, 25, 23, 0.06);
   }
 
-  /* Sketchy border effect */
-  .border-sketchy {
-    border-radius: 8px 6px 10px 7px;
+  /* Editorial hover */
+  .hover-lift {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 2px 8px rgba(28, 25, 23, 0.08),
+      0 1px 2px rgba(28, 25, 23, 0.04);
   }
 
-  /* Left accent border (terminal style) */
-  .border-accent-left {
-    border-left: 3px solid var(--ink-light);
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out;
   }
 
-  /* Terminal glow effect */
-  .glow-terminal {
-    text-shadow: 0 0 10px var(--terminal-cyan);
+  .stagger-children > * {
+    animation: fadeSlideIn 0.35s ease-out backwards;
+  }
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 60ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 120ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 180ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

@@ -40,51 +40,49 @@ export function CategoryNav({
   };
 
   return (
-    <nav className="space-y-1">
-      <h2 className="font-handwritten text-xl text-ink mb-4 px-2">Topics</h2>
+    <nav className="space-y-0.5">
+      <h2 className="font-serif text-sm font-semibold text-ink mb-3 px-2 uppercase tracking-widest">
+        Topics
+      </h2>
 
       {topics.map((topic) => {
         const isExpanded = expandedTopics.has(topic.topic);
         const isSelected = selectedTopic === topic.topic && !selectedSubtopic;
 
         return (
-          <div key={topic.topic} className="group">
-            {/* Topic header */}
+          <div key={topic.topic}>
             <button
               onClick={() => {
                 toggleExpand(topic.topic);
                 onSelect(topic.topic);
               }}
               className={cn(
-                'w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors',
-                'hover:bg-cream-dark/50',
-                isSelected && 'bg-cream-dark border-l-2 border-ink-light'
+                'w-full flex items-center justify-between px-2 py-1.5 rounded-md transition-colors text-sm',
+                'hover:bg-cream-dark',
+                isSelected && 'bg-cream-dark font-medium'
               )}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <ChevronRight
                   className={cn(
-                    'h-4 w-4 text-ink-muted transition-transform',
+                    'h-3.5 w-3.5 text-ink-muted transition-transform',
                     isExpanded && 'rotate-90'
                   )}
                 />
-                <span
-                  className={cn(
-                    'font-scholarly text-sm',
-                    isSelected ? 'text-ink font-medium' : 'text-ink-light'
-                  )}
-                >
+                <span className={cn(
+                  'font-serif',
+                  isSelected ? 'text-ink' : 'text-ink-light'
+                )}>
                   {topic.topic}
                 </span>
               </div>
-              <span className="font-terminal text-xs text-ink-muted">
+              <span className="font-terminal text-ink-muted">
                 {formatCount(topic.count)}
               </span>
             </button>
 
-            {/* Subtopics */}
             {isExpanded && topic.subtopics.length > 0 && (
-              <div className="ml-6 mt-1 space-y-0.5 border-l border-cream-border pl-3">
+              <div className="ml-5 mt-0.5 space-y-0 border-l border-border/60 pl-3">
                 {topic.subtopics.map((sub) => {
                   const isSubSelected =
                     selectedTopic === topic.topic && selectedSubtopic === sub.subtopic;
@@ -94,20 +92,18 @@ export function CategoryNav({
                       key={sub.subtopic}
                       onClick={() => onSelect(topic.topic, sub.subtopic)}
                       className={cn(
-                        'w-full flex items-center justify-between px-2 py-1.5 rounded-md transition-colors text-sm',
-                        'hover:bg-cream-dark/30',
-                        isSubSelected && 'bg-cream-dark text-ink font-medium'
+                        'w-full flex items-center justify-between px-2 py-1 rounded-md transition-colors',
+                        'hover:bg-cream-dark/60',
+                        isSubSelected && 'bg-cream-dark text-ink'
                       )}
                     >
-                      <span
-                        className={cn(
-                          'font-terminal text-xs truncate',
-                          isSubSelected ? 'text-ink' : 'text-ink-muted'
-                        )}
-                      >
+                      <span className={cn(
+                        'font-terminal truncate',
+                        isSubSelected ? 'text-ink font-medium' : 'text-ink-muted'
+                      )}>
                         {sub.subtopic}
                       </span>
-                      <span className="font-terminal text-xs text-ink-muted/70 ml-2">
+                      <span className="font-terminal text-ink-muted/60 ml-2">
                         {formatCount(sub.count)}
                       </span>
                     </button>
@@ -120,7 +116,7 @@ export function CategoryNav({
       })}
 
       {topics.length === 0 && (
-        <p className="font-terminal text-xs text-ink-muted px-3 py-2">
+        <p className="font-terminal text-ink-muted px-3 py-2">
           No topics found
         </p>
       )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { BookmarkWithTags, BookmarkConvergence, TopicStats } from '@/lib/supabase';
+import type { BookmarkWithTags, BookmarkConvergence, TopicStats, SourceStats, CuratorProfile } from '@/lib/supabase';
 
 interface PaginationInfo {
   page: number;
@@ -56,6 +56,7 @@ export function useTopics() {
 interface UseBookmarksOptions {
   topic?: string | null;
   subtopic?: string | null;
+  sort?: string;
   initialPage?: number;
   limit?: number;
 }
@@ -63,6 +64,7 @@ interface UseBookmarksOptions {
 export function useBookmarksByTopic({
   topic,
   subtopic,
+  sort = 'recent',
   initialPage = 1,
   limit = 20,
 }: UseBookmarksOptions = {}) {
@@ -88,6 +90,7 @@ export function useBookmarksByTopic({
 
         if (topic) params.set('topic', topic);
         if (subtopic) params.set('subtopic', subtopic);
+        if (sort && sort !== 'recent') params.set('sort', sort);
 
         const res = await fetch(`/api/bookmarks/by-topic?${params}`);
         if (!res.ok) throw new Error('Failed to fetch bookmarks');
@@ -109,7 +112,7 @@ export function useBookmarksByTopic({
         setIsLoadingMore(false);
       }
     },
-    [topic, subtopic, limit]
+    [topic, subtopic, sort, limit]
   );
 
   useEffect(() => {
@@ -204,6 +207,160 @@ export function useConvergence({
 
   return {
     bookmarks,
+    pagination,
+    isLoading,
+    isLoadingMore,
+    error,
+    loadMore,
+    hasMore: pagination?.hasNext ?? false,
+  };
+}
+
+interface UseSourcesOptions {
+  sort?: string;
+  initialPage?: number;
+  limit?: number;
+}
+
+export function useSources({
+  sort = 'saves',
+  initialPage = 1,
+  limit = 30,
+}: UseSourcesOptions = {}) {
+  const [items, setItems] = useState<SourceStats[]>([]);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSources = useCallback(
+    async (page: number, append = false) => {
+      try {
+        if (append) {
+          setIsLoadingMore(true);
+        } else {
+          setIsLoading(true);
+        }
+
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+        });
+
+        if (sort && sort !== 'saves') params.set('sort', sort);
+
+        const res = await fetch(`/api/sources?${params}`);
+        if (!res.ok) throw new Error('Failed to fetch sources');
+
+        const data = await res.json();
+
+        if (append) {
+          setItems((prev) => [...prev, ...data.data]);
+        } else {
+          setItems(data.data);
+        }
+
+        setPagination(data.pagination);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
+    },
+    [sort, limit]
+  );
+
+  useEffect(() => {
+    fetchSources(initialPage);
+  }, [fetchSources, initialPage]);
+
+  const loadMore = useCallback(() => {
+    if (pagination?.hasNext && !isLoadingMore) {
+      fetchSources(pagination.page + 1, true);
+    }
+  }, [pagination, isLoadingMore, fetchSources]);
+
+  return {
+    items,
+    pagination,
+    isLoading,
+    isLoadingMore,
+    error,
+    loadMore,
+    hasMore: pagination?.hasNext ?? false,
+  };
+}
+
+interface UsePeopleOptions {
+  sort?: string;
+  initialPage?: number;
+  limit?: number;
+}
+
+export function usePeople({
+  sort = 'active',
+  initialPage = 1,
+  limit = 30,
+}: UsePeopleOptions = {}) {
+  const [items, setItems] = useState<CuratorProfile[]>([]);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchPeople = useCallback(
+    async (page: number, append = false) => {
+      try {
+        if (append) {
+          setIsLoadingMore(true);
+        } else {
+          setIsLoading(true);
+        }
+
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+        });
+
+        if (sort && sort !== 'active') params.set('sort', sort);
+
+        const res = await fetch(`/api/people?${params}`);
+        if (!res.ok) throw new Error('Failed to fetch people');
+
+        const data = await res.json();
+
+        if (append) {
+          setItems((prev) => [...prev, ...data.data]);
+        } else {
+          setItems(data.data);
+        }
+
+        setPagination(data.pagination);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
+    },
+    [sort, limit]
+  );
+
+  useEffect(() => {
+    fetchPeople(initialPage);
+  }, [fetchPeople, initialPage]);
+
+  const loadMore = useCallback(() => {
+    if (pagination?.hasNext && !isLoadingMore) {
+      fetchPeople(pagination.page + 1, true);
+    }
+  }, [pagination, isLoadingMore, fetchPeople]);
+
+  return {
+    items,
     pagination,
     isLoading,
     isLoadingMore,

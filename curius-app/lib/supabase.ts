@@ -84,9 +84,22 @@ export interface BookmarkWithTags extends Bookmark {
 
 export interface TopicStats {
   topic: string;
+  description?: string;
+  color?: string;
   count: number;
   subtopics: Array<{
     subtopic: string;
     count: number;
   }>;
+}
+
+export interface SourceStats {
+  domain: string;
+  bookmark_count: number;
+  total_saves: number;
+  top_topics: Array<{ topic: string; count: number }>;
+}
+
+export interface CuratorProfile extends User {
+  top_topics: Array<{ topic: string; count: number }>;
 }

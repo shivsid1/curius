@@ -10,10 +10,8 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const minSaves = parseInt(searchParams.get('minSaves') || '2');
-    const topic = searchParams.get('topic');
-
     // Get total count for random offset
-    let countQuery = supabase
+    const countQuery = supabase
       .from('bookmarks')
       .select('id', { count: 'exact', head: true })
       .gte('saves_count', minSaves);
@@ -31,7 +29,7 @@ export async function GET(request: NextRequest) {
     const randomOffset = Math.floor(Math.random() * count);
 
     // Fetch random bookmark
-    let query = supabase
+    const query = supabase
       .from('bookmarks')
       .select('*')
       .gte('saves_count', minSaves)

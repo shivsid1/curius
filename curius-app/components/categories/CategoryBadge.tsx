@@ -20,20 +20,20 @@ export function CategoryBadge({
   const isClickable = !!onClick;
 
   const sizeClasses = {
-    sm: 'text-xs px-2 py-0.5',
-    md: 'text-sm px-3 py-1',
+    sm: 'text-[11px] px-1.5 py-0.5',
+    md: 'text-xs px-2 py-1',
   };
 
   const variantClasses = {
-    default: 'bg-cream-dark text-ink-light border-cream-border',
-    outline: 'bg-transparent text-ink-muted border-cream-border hover:border-ink-light',
-    filled: 'bg-ink text-cream border-ink',
+    default: 'bg-cream-dark text-ink-light',
+    outline: 'bg-transparent text-ink-muted border border-border hover:border-ink-light',
+    filled: 'bg-ink text-cream',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 font-terminal border rounded-md transition-colors',
+        'inline-flex items-center gap-1 font-terminal rounded-md transition-colors',
         sizeClasses[size],
         variantClasses[variant],
         isClickable && 'cursor-pointer hover:bg-cream-dark/80',
@@ -43,10 +43,10 @@ export function CategoryBadge({
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
     >
-      <span className="font-medium">{topic}</span>
+      <span>{topic}</span>
       {subtopic && (
         <>
-          <span className="text-ink-muted">/</span>
+          <span className="text-ink-muted/60">/</span>
           <span className="text-ink-muted">{subtopic}</span>
         </>
       )}

@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     // Filter to bookmarks with 2+ recent saves and sort by count
     const trendingIds = Object.entries(saveCounts)
-      .filter(([_, count]) => count >= 2)
+      .filter(([, count]) => count >= 2)
       .sort((a, b) => b[1] - a[1])
       .map(([id, count]) => ({ id: parseInt(id), recentSaves: count }));
 
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
             saved_by_users: [],
           };
         })
-        .filter(Boolean) as any[]
+        .filter((item): item is NonNullable<typeof item> => item !== null)
     );
 
     return NextResponse.json({

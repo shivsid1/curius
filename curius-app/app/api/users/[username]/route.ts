@@ -80,6 +80,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
 
       // Transform the data
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       bookmarks = bookmarksData?.map((ub: any) => ({
         ...ub.bookmarks,
         saved_at: ub.saved_at,

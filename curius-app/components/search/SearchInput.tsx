@@ -28,10 +28,10 @@ export function SearchInput({
         placeholder={placeholder}
         autoFocus={autoFocus}
         className={cn(
-          'w-full h-12 pl-12 pr-10 font-handwritten text-lg',
-          'bg-cream-dark border-2 border-cream-border rounded-lg',
-          'focus:border-ink-light focus:outline-none',
-          'placeholder:text-ink-muted placeholder:font-handwritten',
+          'w-full h-12 pl-12 pr-10 font-serif text-base text-ink',
+          'bg-cream-dark border border-border rounded-lg',
+          'focus:border-ink-light focus:outline-none focus:ring-1 focus:ring-ink-light/20',
+          'placeholder:text-ink-muted',
           'transition-colors'
         )}
       />
