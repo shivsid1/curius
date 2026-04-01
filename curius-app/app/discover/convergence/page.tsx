@@ -45,7 +45,7 @@ export default function ConvergencePage() {
       {/* Page header */}
       <h1 className="font-serif text-xl font-semibold text-ink mb-2">Convergence</h1>
       <p className="font-scholarly text-sm text-ink-muted mb-6">
-        Links saved independently by multiple curators -- a signal worth paying attention to.
+        Links saved independently by multiple curators. A signal worth paying attention to.
       </p>
 
       {/* Filters */}
@@ -94,7 +94,6 @@ export default function ConvergencePage() {
           {!hasMore && bookmarks.length > 0 && !isLoading && (
             <div className="py-4 text-center">
               <span className="font-terminal text-xs text-ink-muted">
-                -- End of list --
               </span>
             </div>
           )}

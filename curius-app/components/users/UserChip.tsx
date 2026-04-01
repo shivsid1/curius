@@ -26,15 +26,14 @@ export function UserChip({
     md: 'w-6 h-6',
   };
 
-  // Generate a consistent color based on username
   const getAvatarColor = (name: string) => {
     const colors = [
-      'bg-blue-100 text-blue-700',
-      'bg-green-100 text-green-700',
-      'bg-purple-100 text-purple-700',
-      'bg-amber-100 text-amber-700',
-      'bg-rose-100 text-rose-700',
-      'bg-cyan-100 text-cyan-700',
+      'bg-blue-50 text-blue-900',
+      'bg-indigo-50 text-indigo-900',
+      'bg-sky-50 text-sky-900',
+      'bg-slate-100 text-slate-800',
+      'bg-blue-100 text-blue-800',
+      'bg-indigo-100 text-indigo-800',
     ];
     const index = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[index % colors.length];

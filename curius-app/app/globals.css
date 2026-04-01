@@ -1,14 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 /*
   DESIGN ETHOS: Curius
-  Curated, Discerning, Warm, Unhurried, Literary
-  A quiet reading room. Rich typography on warm paper.
-  Every element earns its place.
-  Anti-ethos: Terminal aesthetic, cold SaaS, visual clutter
+  Cartographic, Collected, Unhurried, Handcrafted, Exploratory
+  A field journal from an age of discovery. Blue ink on warm paper.
+  Every element looks stamped or hand-drawn.
+  Anti-ethos: SaaS dashboard, multicolor rainbow, flat modern UI
 */
 
 @theme inline {
@@ -70,96 +68,57 @@
 :root {
   --radius: 0.625rem;
 
-  /* Warm Paper -- not yellow-cream, just warm white */
-  --cream: #FAFAF8;
-  --cream-light: #FDFDFC;
-  --cream-dark: #F3F3F0;
-  --cream-border: #E4E4E0;
+  /* Parchment -- warm cream paper */
+  --cream: #FAF8F4;
+  --cream-light: #FDFCFA;
+  --cream-dark: #F0EDE6;
+  --cream-border: #D8D2C8;
 
-  /* Rich Ink -- warm near-black, not blue */
-  --ink: #1C1917;
-  --ink-light: #57534E;
-  --ink-muted: #A8A29E;
+  /* Blue Ink -- deep navy, single-color system */
+  --ink: #1B2A4A;
+  --ink-light: #2E4470;
+  --ink-muted: #5C7396;
 
-  /* Editorial accent -- warm amber */
-  --terminal-cyan: #B45309;
-  --terminal-green: #D97706;
+  /* Accent -- same blue family for monochrome */
+  --terminal-cyan: #1B2A4A;
+  --terminal-green: #3D5A8A;
 
-  /* Shadcn tokens */
-  --background: #FAFAF8;
-  --foreground: #1C1917;
-  --card: #FFFFFF;
-  --card-foreground: #1C1917;
-  --popover: #FFFFFF;
-  --popover-foreground: #1C1917;
-  --primary: #1C1917;
-  --primary-foreground: #FAFAF8;
-  --secondary: #F3F3F0;
-  --secondary-foreground: #1C1917;
-  --muted: #F3F3F0;
-  --muted-foreground: #A8A29E;
-  --accent: #F3F3F0;
-  --accent-foreground: #1C1917;
-  --destructive: #DC2626;
-  --border: #E7E5E4;
-  --input: #E7E5E4;
-  --ring: #57534E;
+  /* Shadcn tokens -- blue ink on parchment */
+  --background: #FAF8F4;
+  --foreground: #1B2A4A;
+  --card: #FDFCFA;
+  --card-foreground: #1B2A4A;
+  --popover: #FDFCFA;
+  --popover-foreground: #1B2A4A;
+  --primary: #1B2A4A;
+  --primary-foreground: #FAF8F4;
+  --secondary: #F0EDE6;
+  --secondary-foreground: #1B2A4A;
+  --muted: #F0EDE6;
+  --muted-foreground: #5C7396;
+  --accent: #E8EDF4;
+  --accent-foreground: #1B2A4A;
+  --destructive: #8B1A1A;
+  --border: #C8D4E4;
+  --input: #C8D4E4;
+  --ring: #3D5A8A;
 
-  /* Charts -- warm editorial palette */
-  --chart-1: #B45309;
-  --chart-2: #1C1917;
-  --chart-3: #57534E;
-  --chart-4: #92400E;
-  --chart-5: #A8A29E;
+  /* Charts -- blue monochrome shades */
+  --chart-1: #1B2A4A;
+  --chart-2: #2E4470;
+  --chart-3: #3D5A8A;
+  --chart-4: #6B8CBF;
+  --chart-5: #8DA4C4;
 
   /* Sidebar */
-  --sidebar: #F3F3F0;
-  --sidebar-foreground: #1C1917;
-  --sidebar-primary: #1C1917;
-  --sidebar-primary-foreground: #FAFAF8;
-  --sidebar-accent: #E7E5E4;
-  --sidebar-accent-foreground: #1C1917;
-  --sidebar-border: #E7E5E4;
-  --sidebar-ring: #57534E;
-}
-
-.dark {
-  --cream: #171412;
-  --cream-light: #1C1917;
-  --cream-dark: #0C0A09;
-  --cream-border: #292524;
-
-  --ink: #F5F5F4;
-  --ink-light: #A8A29E;
-  --ink-muted: #78716C;
-
-  --background: #0C0A09;
-  --foreground: #F5F5F4;
-  --card: #1C1917;
-  --card-foreground: #F5F5F4;
-  --popover: #1C1917;
-  --popover-foreground: #F5F5F4;
-  --primary: #F5F5F4;
-  --primary-foreground: #0C0A09;
-  --secondary: #292524;
-  --secondary-foreground: #F5F5F4;
-  --muted: #292524;
-  --muted-foreground: #78716C;
-  --accent: #292524;
-  --accent-foreground: #F5F5F4;
-  --destructive: #EF4444;
-  --border: #292524;
-  --input: #292524;
-  --ring: #D97706;
-
-  --sidebar: #1C1917;
-  --sidebar-foreground: #F5F5F4;
-  --sidebar-primary: #D97706;
-  --sidebar-primary-foreground: #0C0A09;
-  --sidebar-accent: #292524;
-  --sidebar-accent-foreground: #F5F5F4;
-  --sidebar-border: #292524;
-  --sidebar-ring: #D97706;
+  --sidebar: #F0EDE6;
+  --sidebar-foreground: #1B2A4A;
+  --sidebar-primary: #1B2A4A;
+  --sidebar-primary-foreground: #FAF8F4;
+  --sidebar-accent: #E8EDF4;
+  --sidebar-accent-foreground: #1B2A4A;
+  --sidebar-border: #C8D4E4;
+  --sidebar-ring: #3D5A8A;
 }
 
 @layer base {
@@ -173,6 +132,9 @@
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.011em;
     line-height: 1.6;
+    background-image: url('/paper-texture.svg');
+    background-repeat: repeat;
+    background-size: 200px 200px;
   }
 }
 
@@ -185,29 +147,49 @@
   .font-terminal {
     font-family: var(--font-mono), monospace;
     font-size: 0.85em;
-    letter-spacing: -0.02em;
+    letter-spacing: 0.02em;
   }
 
   .font-scholarly {
     font-family: var(--font-serif), Georgia, serif;
   }
 
-  /* Soft card shadow */
-  .shadow-paper {
-    box-shadow:
-      0 1px 2px rgba(28, 25, 23, 0.04),
-      0 1px 3px rgba(28, 25, 23, 0.06);
+  .font-atlas {
+    font-family: var(--font-atlas), 'EB Garamond', Georgia, serif;
   }
 
-  /* Editorial hover */
+  .font-cartographic {
+    font-family: var(--font-mono), monospace;
+    font-size: 0.75em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* Paper card shadow -- blue-tinted */
+  .shadow-paper {
+    box-shadow:
+      0 1px 2px rgba(27, 42, 74, 0.04),
+      0 1px 3px rgba(27, 42, 74, 0.06);
+  }
+
+  /* Hover lift -- blue-tinted shadows */
   .hover-lift {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
   .hover-lift:hover {
     transform: translateY(-1px);
     box-shadow:
-      0 2px 8px rgba(28, 25, 23, 0.08),
-      0 1px 2px rgba(28, 25, 23, 0.04);
+      0 2px 8px rgba(27, 42, 74, 0.08),
+      0 1px 2px rgba(27, 42, 74, 0.04);
+  }
+
+  /* Engraved card frame -- double border effect */
+  .frame-engraved {
+    border: 1px solid var(--cream-border);
+    box-shadow:
+      inset 0 0 0 1px rgba(27, 42, 74, 0.03),
+      0 1px 2px rgba(27, 42, 74, 0.04);
   }
 
   .animate-fade-in {

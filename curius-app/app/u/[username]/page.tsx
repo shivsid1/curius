@@ -202,7 +202,7 @@ export default function UserProfilePage() {
                     rel="noopener noreferrer"
                     className="group/link flex-1"
                   >
-                    <h3 className="font-serif text-[15px] font-medium text-ink leading-snug group-hover/link:text-terminal-cyan transition-colors line-clamp-2">
+                    <h3 className="font-serif text-[15px] font-medium text-ink leading-snug group-hover/link:text-ink-light transition-colors line-clamp-2">
                       {bookmark.title || 'Untitled'}
                     </h3>
                   </Link>
@@ -261,7 +261,6 @@ export default function UserProfilePage() {
           {!hasMore && bookmarks.length > 0 && !isLoading && (
             <div className="py-4 text-center">
               <span className="font-terminal text-xs text-ink-muted">
-                -- End of list --
               </span>
             </div>
           )}

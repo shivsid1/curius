@@ -1,10 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { ExternalLink, TrendingUp } from 'lucide-react';
+import { ExternalLink, TrendingUp, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DomainFavicon } from '@/components/shared/DomainFavicon';
-import { UserChipGroup } from '@/components/users/UserChip';
 import type { BookmarkConvergence } from '@/lib/supabase';
 
 interface ConvergenceCardProps {
@@ -32,15 +31,15 @@ export function ConvergenceCard({ bookmark, className }: ConvergenceCardProps) {
             rel="noopener noreferrer"
             className="group/link flex-1"
           >
-            <h3 className="font-serif text-[15px] font-medium text-ink leading-snug group-hover/link:text-terminal-cyan transition-colors line-clamp-2">
+            <h3 className="font-serif text-[15px] font-medium text-ink leading-snug group-hover/link:text-ink-light transition-colors line-clamp-2">
               {bookmark.title || 'Untitled'}
             </h3>
           </Link>
 
           {/* Trending score */}
           <div className="shrink-0 flex items-center gap-1.5">
-            <TrendingUp className="w-3.5 h-3.5 text-terminal-cyan" />
-            <span className="font-terminal text-sm text-terminal-cyan font-medium">
+            <TrendingUp className="w-3.5 h-3.5 text-ink-light" />
+            <span className="font-terminal text-sm text-ink font-medium">
               {recentSaves}
             </span>
           </div>
@@ -66,18 +65,13 @@ export function ConvergenceCard({ bookmark, className }: ConvergenceCardProps) {
           </Link>
         </div>
 
-        {/* Users who saved this */}
+        {/* Curator count */}
         {bookmark.saved_by_users && bookmark.saved_by_users.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-border/40">
-            <div className="flex items-center gap-2">
-              <span className="font-terminal text-xs text-ink-muted">
-                Curators:
-              </span>
-              <UserChipGroup
-                users={bookmark.saved_by_users.map((u) => ({ username: u }))}
-                maxDisplay={5}
-              />
-            </div>
+          <div className="mt-2 flex items-center gap-1.5">
+            <Users className="w-3 h-3 text-ink-muted" />
+            <span className="font-terminal text-xs text-ink-muted">
+              saved by {bookmark.saved_by_users.length} curator{bookmark.saved_by_users.length !== 1 ? 's' : ''}
+            </span>
           </div>
         )}
       </div>
