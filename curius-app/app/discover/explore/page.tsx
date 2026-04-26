@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { ArrowDownWideNarrow, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CategoryNav } from '@/components/categories/CategoryNav';
 import { BookmarkList } from '@/components/bookmarks/BookmarkList';

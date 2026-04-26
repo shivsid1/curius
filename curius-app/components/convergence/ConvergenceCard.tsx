@@ -32,7 +32,7 @@ export function ConvergenceCard({ bookmark, className }: ConvergenceCardProps) {
             className="group/link flex-1"
           >
             <h3 className="font-serif text-[15px] font-medium text-ink leading-snug group-hover/link:text-ink-light transition-colors line-clamp-2">
-              {bookmark.title || 'Untitled'}
+              {(bookmark as BookmarkConvergence & { title_en?: string }).title_en || bookmark.title || 'Untitled'}
             </h3>
           </Link>
 
