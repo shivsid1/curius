@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 // Batch .in() queries to avoid URL length limits
 async function fetchTagsInBatches(bookmarkIds: number[]) {
@@ -20,29 +20,26 @@ async function fetchTagsInBatches(bookmarkIds: number[]) {
   return allTags;
 }
 
-async function fetchAllBookmarks() {
-  const allBookmarks: Array<{ id: number; domain: string; saves_count: number }> = [];
-  const batchSize = 10000;
-  let offset = 0;
-  let hasMore = true;
+interface DomainAggregate {
+  domain: string;
+  bookmark_count: number;
+  total_saves: number;
+  max_id: number;
+}
 
-  while (hasMore) {
-    const { data, error } = await supabase
-      .from('bookmarks')
-      .select('id, domain, saves_count')
-      .range(offset, offset + batchSize - 1);
+// Aggregate domain stats at the DB layer via PostgREST's aggregate functions.
+// Replaces a JS-side aggregation that paginated through ~183k rows in 10k batches.
+async function fetchDomainAggregates(): Promise<DomainAggregate[]> {
+  // PostgREST returns one row per domain when aggregate functions are mixed
+  // with a non-aggregated column (implicit GROUP BY domain).
+  const { data, error } = await supabase
+    .from('bookmarks')
+    .select('domain, bookmark_count:id.count(), total_saves:saves_count.sum(), max_id:id.max()')
+    .not('domain', 'is', null)
+    .returns<DomainAggregate[]>();
 
-    if (error) throw error;
-    if (!data || data.length === 0) {
-      hasMore = false;
-    } else {
-      allBookmarks.push(...data);
-      offset += batchSize;
-      if (data.length < batchSize) hasMore = false;
-    }
-  }
-
-  return allBookmarks;
+  if (error) throw error;
+  return data ?? [];
 }
 
 export async function GET(request: NextRequest) {
@@ -52,36 +49,18 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '30'), 100);
     const sort = searchParams.get('sort') || 'saves';
 
-    // Fetch all bookmarks in batches for aggregation
-    const bookmarks = await fetchAllBookmarks();
+    // Aggregate by domain at the DB layer
+    const aggregates = await fetchDomainAggregates();
 
-    // Aggregate by domain
-    const domainMap = new Map<string, { count: number; saves: number; maxId: number }>();
-
-    for (const b of bookmarks) {
-      if (!b.domain) continue;
-      const existing = domainMap.get(b.domain);
-      if (existing) {
-        existing.count++;
-        existing.saves += b.saves_count || 0;
-        if (b.id > existing.maxId) existing.maxId = b.id;
-      } else {
-        domainMap.set(b.domain, {
-          count: 1,
-          saves: b.saves_count || 0,
-          maxId: b.id,
-        });
-      }
-    }
-
-    // Convert to array and sort
-    const domains = Array.from(domainMap.entries()).map(([domain, stats]) => ({
-      domain,
-      bookmark_count: stats.count,
-      total_saves: stats.saves,
-      maxId: stats.maxId,
-      top_topics: [] as Array<{ topic: string; count: number }>,
-    }));
+    const domains = aggregates
+      .filter((a) => a.domain)
+      .map((a) => ({
+        domain: a.domain,
+        bookmark_count: a.bookmark_count ?? 0,
+        total_saves: a.total_saves ?? 0,
+        maxId: a.max_id ?? 0,
+        top_topics: [] as Array<{ topic: string; count: number }>,
+      }));
 
     if (sort === 'count') {
       domains.sort((a, b) => b.bookmark_count - a.bookmark_count);
