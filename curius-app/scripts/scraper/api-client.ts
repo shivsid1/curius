@@ -124,9 +124,11 @@ export class CuriusApiClient {
   }
 
   private getHeaders(username: string): Record<string, string> {
+    // Encode username for Referer header -- non-ASCII chars cause ByteString errors
+    const safeUsername = encodeURIComponent(username);
     return {
       'Accept': 'application/json',
-      'Referer': `https://curius.app/${username}`,
+      'Referer': `https://curius.app/${safeUsername}`,
       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     };
   }

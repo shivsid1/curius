@@ -1,137 +1,60 @@
-// Curius Link Taxonomy
-// Main categories with subcategories
+// Curius Link Taxonomy - 6 Topics, 31 Subtopics
+// Must match frontend taxonomy at lib/utils/taxonomy.ts exactly
 
 export const TAXONOMY = {
-  'AI/ML': {
+  'Technology': {
     subcategories: [
-      'LLMs & Language Models',
-      'Computer Vision',
-      'AI Research',
-      'AI Tools & APIs',
-      'AI Agents',
-      'AI Ethics & Safety',
-      'AI Hardware',
-    ],
-  },
-  'Tech': {
-    subcategories: [
-      'Web Development',
-      'Mobile Development',
+      'AI & Machine Learning',
+      'Developer Tools',
+      'Software Engineering',
       'DevOps & Infrastructure',
-      'Databases',
       'Security',
-      'Programming Languages',
-      'Open Source',
+      'Hardware',
     ],
   },
-  'Startups': {
+  'Culture': {
     subcategories: [
-      'Fundraising & VC',
-      'Growth & Marketing',
-      'Product Management',
-      'Hiring & Culture',
-      'Strategy',
-      'Founder Stories',
+      'Art & Design',
+      'Philosophy & Ideas',
+      'Politics & Society',
+      'History',
+      'Books & Literature',
     ],
   },
   'Science': {
     subcategories: [
       'Biology & Biotech',
-      'Physics',
-      'Chemistry',
-      'Space & Astronomy',
+      'Physics & Math',
+      'Medicine & Health',
+      'Research Papers',
       'Climate & Environment',
-      'Neuroscience',
     ],
   },
-  'Finance': {
+  'Business': {
     subcategories: [
-      'Investing',
-      'Markets & Trading',
-      'Personal Finance',
+      'Startups & Founders',
+      'Investing & Finance',
+      'Management & Leadership',
+      'Marketing & Growth',
       'Economics',
-      'Crypto & Web3',
     ],
   },
-  'Design': {
+  'Personal': {
     subcategories: [
-      'UI/UX Design',
-      'Visual Design',
-      'Design Systems',
-      'Typography',
-      'Branding',
-    ],
-  },
-  'Writing': {
-    subcategories: [
-      'Essays & Opinion',
-      'Technical Writing',
-      'Fiction',
-      'Journalism',
-      'Newsletters',
-    ],
-  },
-  'Health': {
-    subcategories: [
-      'Longevity',
-      'Fitness',
-      'Mental Health',
-      'Nutrition',
-      'Medicine',
-    ],
-  },
-  'Philosophy': {
-    subcategories: [
-      'Ethics',
-      'Epistemology',
-      'Rationality',
-      'Politics',
-      'History of Ideas',
-    ],
-  },
-  'Education': {
-    subcategories: [
-      'Online Courses',
-      'Learning Methods',
-      'Research',
-      'Tutorials',
-      'Books & Reading',
+      'Life Advice',
+      'Career & Skills',
+      'Learning & Education',
+      'Productivity',
+      'Health & Fitness',
     ],
   },
   'Media': {
     subcategories: [
-      'Podcasts',
-      'Videos',
-      'News',
-      'Music',
-      'Games',
-    ],
-  },
-  'Tools': {
-    subcategories: [
-      'Productivity',
-      'Developer Tools',
-      'Design Tools',
-      'Automation',
-      'Communication',
-    ],
-  },
-  'Culture': {
-    subcategories: [
-      'Art',
-      'History',
-      'Society',
-      'Travel',
-      'Food',
-    ],
-  },
-  'Career': {
-    subcategories: [
-      'Job Hunting',
-      'Skill Development',
-      'Networking',
-      'Remote Work',
-      'Leadership',
+      'Entertainment',
+      'Podcasts & Videos',
+      'News & Modern Events',
+      'Gaming',
+      'Sports',
     ],
   },
 } as const;
