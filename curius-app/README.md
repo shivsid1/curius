@@ -1,40 +1,37 @@
-# Curius Atlas
-
-A map of what curious people on the internet are actually reading.
-
-→ **Live:** [curius-app.vercel.app](https://curius-app.vercel.app)
-
-## Why I built this
-
-The internet is dying — or at least, the parts of it worth reading are getting harder to find.
-
-Algorithms collapse everything toward the mean. Whatever optimizes for clicks gets surfaced; whatever doesn't, disappears. AI-generated slop now floods every feed, indistinguishable at a glance from the genuine article. The signal-to-noise ratio gets worse every year, and the result is a flatter, more homogeneous internet — the same takes, the same headlines, the same recycled threads.
-
-What's missing is **variance**. The weird essay nobody clicked but two people refuse to forget. The obscure paper that quietly changed a field. The personal blog with thirty readers that's better than anything on the front page. This is the long tail of the internet — the part where genuine taste lives, and the part algorithms are structurally incapable of surfacing.
-
-But quietly, thousands of curious people are still finding remarkable things and saving them to [Curius](https://curius.app). They are, in effect, a distributed editorial layer for the long tail. **Curius Atlas indexes their saves.** ~183k bookmarks from 6,000+ curators, classified across 6 topics and 31 subtopics, surfaced through patterns of human convergence rather than algorithmic optimization.
-
-Not a feed. An atlas.
-
-The bet is simple: the internet isn't dead, the algorithms are just bad at finding what's still alive. The fix isn't another model — it's listening to the people who already know where to look.
+<div align="center">
+  <img src="public/illustrations/compass.png" alt="Curius Atlas" width="120" />
+  <h1>Curius Atlas</h1>
+  <p><i>A map of what curious people on the internet are actually reading.</i></p>
+  <p>
+    <a href="https://curius-app.vercel.app">→ curius-app.vercel.app</a>
+  </p>
+</div>
 
 ## How it works
 
-Two TypeScript cron jobs on Railway. One syncs new saves from the Curius public API; the other classifies new bookmarks with an LLM. Everything writes to Supabase Postgres. The Next.js frontend reads that data and renders six views:
+Two TypeScript cron jobs on Railway sync new saves from the [Curius](https://curius.app) public API and classify each one with an LLM into 6 topics × 31 subtopics. Everything writes to Supabase Postgres. The Next.js frontend reads that and renders:
 
 - **Launch** — get fired into a random corner of the internet
-- **Explore** — browse by topic, with convergence (multiple curators saving the same thing) as the quality signal
-- **Trending** — what curators are converging on right now
-- **Roots** — the sources (domains) the community draws from most
-- **Atlas** — long-tail visualization of the taste graph
+- **Explore** — browse by topic, ranked by *convergence* (multiple curators saving the same thing as the quality signal)
+- **Trending** — what people are saving right now
+- **Roots** — which domains the community draws from most
+- **Atlas** — d3 visualization of the long tail
 - **Search** — text search across the corpus
+
+Currently indexes ~183k bookmarks from ~6k curators.
 
 ## Stack
 
-- **Frontend:** Next.js 15, Tailwind, shadcn/ui, d3 for visualizations
-- **Data:** Supabase (Postgres)
-- **Scrapers:** TypeScript cron jobs on Railway
-- **Hosting:** Vercel
+Next.js 15 · Tailwind · shadcn/ui · d3 · Supabase Postgres · Railway crons · Vercel
+
+## Notable parts
+
+If you want to skim the interesting bits:
+
+- [`scripts/scraper/cron.ts`](scripts/scraper/cron.ts) — daily Railway pipeline (Curius API → dedupe → Supabase upsert → LLM classify, all in one file)
+- [`scripts/scraper/categorizer.ts`](scripts/scraper/categorizer.ts) — LLM classification with the taxonomy
+- [`components/viz/`](components/viz) — three d3 visualizations (`TasteMap`, `LongTail`, `Zeitgeist`) built directly against the corpus data
+- [`app/api/stats/convergence`](app/api/stats/convergence) — the convergence ranking query that powers Trending
 
 ## Local dev
 
@@ -43,7 +40,13 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. You'll need a `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` pointing at your own Supabase instance.
+Open `http://localhost:3000`. Requires a `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` pointing at your own Supabase project.
+
+## Why this exists
+
+Algorithms collapse the internet toward the mean — clicks win, variance loses, and AI slop fills the gap. But thousands of curious people are still saving genuinely good things to Curius every day. They are, in effect, a distributed editorial layer for the long tail.
+
+This is a UI on top of their taste — not a feed, an atlas. The bet is that the internet isn't dead; the algorithms are just bad at finding what's still alive.
 
 ## Credits
 
