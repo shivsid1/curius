@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useCallback } from 'react';
 import Image from 'next/image';
 import { BookmarkCard } from './BookmarkCard';
 import { BookmarkSkeleton } from './BookmarkSkeleton';
+import { useInfiniteScroll } from '@/lib/hooks';
 import type { Bookmark } from '@/lib/supabase';
 
 interface BookmarkTag {
@@ -35,38 +36,14 @@ export function BookmarkList({
   showUsers = false,
   emptyMessage = 'No bookmarks found',
 }: BookmarkListProps) {
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const handleLoadMore = useCallback(() => {
+    if (onLoadMore) onLoadMore();
+  }, [onLoadMore]);
 
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const target = entries[0];
-      if (target.isIntersecting && hasMore && !isLoading && onLoadMore) {
-        onLoadMore();
-      }
-    },
-    [hasMore, isLoading, onLoadMore]
-  );
-
-  useEffect(() => {
-    const option = {
-      root: null,
-      rootMargin: '100px',
-      threshold: 0,
-    };
-
-    observerRef.current = new IntersectionObserver(handleObserver, option);
-
-    if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current);
-    }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [handleObserver]);
+  const sentinelRef = useInfiniteScroll(handleLoadMore, {
+    hasMore: hasMore && Boolean(onLoadMore),
+    isLoading,
+  });
 
   if (!isLoading && bookmarks.length === 0) {
     return (
@@ -103,22 +80,18 @@ export function BookmarkList({
         </div>
       )}
 
-      {/* Infinite scroll trigger */}
-      {hasMore && !isLoading && (
-        <div ref={loadMoreRef} className="h-10 flex items-center justify-center">
+      {/* Infinite scroll sentinel -- always rendered; the hook gates loadMore */}
+      <div
+        ref={sentinelRef}
+        className="h-10 flex items-center justify-center"
+        aria-hidden="true"
+      >
+        {hasMore && !isLoading && (
           <span className="font-terminal text-xs text-ink-muted">
             Scroll for more...
           </span>
-        </div>
-      )}
-
-      {/* End of list indicator */}
-      {!hasMore && bookmarks.length > 0 && !isLoading && (
-        <div className="py-4 text-center">
-          <span className="font-terminal text-xs text-ink-muted">
-          </span>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

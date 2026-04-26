@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { Compass, Globe, Layers, Map, Search, Zap } from 'lucide-react';
+import { Compass, Globe, Layers, Map, Search, Users, Zap } from 'lucide-react';
 import { Ornament } from '@/components/shared/Ornament';
 import { CreatorLetter } from '@/components/layout/CreatorLetter';
 
@@ -28,6 +28,11 @@ const tabs = [
     name: 'Roots',
     href: '/discover/sources',
     icon: Globe,
+  },
+  {
+    name: 'People',
+    href: '/discover/people',
+    icon: Users,
   },
   {
     name: 'Atlas',

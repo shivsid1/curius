@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { ArrowDownWideNarrow } from 'lucide-react';
-import { usePeople } from '@/lib/hooks';
+import { usePeople, useInfiniteScroll } from '@/lib/hooks';
 import { CuratorCard } from '@/components/people/CuratorCard';
 import { CuratorListSkeleton } from '@/components/people/CuratorSkeleton';
 import { cn } from '@/lib/utils';
@@ -22,32 +22,10 @@ export default function PeoplePage() {
   const { items, pagination, isLoading, isLoadingMore, hasMore, loadMore } =
     usePeople({ sort });
 
-  // Infinite scroll sentinel
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const target = entries[0];
-      if (target.isIntersecting && hasMore && !isLoading && !isLoadingMore) {
-        loadMore();
-      }
-    },
-    [hasMore, isLoading, isLoadingMore, loadMore]
-  );
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: '100px',
-      threshold: 0,
-    });
-
-    if (sentinelRef.current) {
-      observer.observe(sentinelRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [handleObserver]);
+  const sentinelRef = useInfiniteScroll(loadMore, {
+    hasMore,
+    isLoading: isLoading || isLoadingMore,
+  });
 
   return (
     <div>
@@ -114,20 +92,18 @@ export default function PeoplePage() {
             </div>
           )}
 
-          {hasMore && !isLoadingMore && (
-            <div ref={sentinelRef} className="h-10 flex items-center justify-center">
+          {/* Infinite scroll sentinel -- always rendered; hook gates loadMore */}
+          <div
+            ref={sentinelRef}
+            className="h-10 flex items-center justify-center"
+            aria-hidden="true"
+          >
+            {hasMore && !isLoadingMore && (
               <span className="font-terminal text-xs text-ink-muted">
                 Scroll for more...
               </span>
-            </div>
-          )}
-
-          {!hasMore && items.length > 0 && !isLoading && (
-            <div className="py-4 text-center">
-              <span className="font-terminal text-xs text-ink-muted">
-                  </span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
     </div>

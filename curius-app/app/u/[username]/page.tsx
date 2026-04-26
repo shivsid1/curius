@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { BookmarkSkeleton } from '@/components/bookmarks/BookmarkSkeleton';
 import { DomainFavicon } from '@/components/shared/DomainFavicon';
+import { useInfiniteScroll } from '@/lib/hooks';
 import type { User, Bookmark } from '@/lib/supabase';
 
 interface UserBookmarkItem extends Bookmark {
@@ -38,8 +39,6 @@ export default function UserProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const fetchUser = useCallback(
     async (pageNum: number, append = false) => {
@@ -98,30 +97,10 @@ export default function UserProfilePage() {
     }
   }, [hasMore, isLoadingMore, fetchUser, page]);
 
-  // Infinite scroll observer
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const target = entries[0];
-      if (target.isIntersecting && hasMore && !isLoading && !isLoadingMore) {
-        loadMore();
-      }
-    },
-    [hasMore, isLoading, isLoadingMore, loadMore]
-  );
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: '100px',
-      threshold: 0,
-    });
-
-    if (sentinelRef.current) {
-      observer.observe(sentinelRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [handleObserver]);
+  const sentinelRef = useInfiniteScroll(loadMore, {
+    hasMore,
+    isLoading: isLoading || isLoadingMore,
+  });
 
   // Derive display name
   const displayName = user
@@ -248,22 +227,18 @@ export default function UserProfilePage() {
             </div>
           )}
 
-          {/* Infinite scroll sentinel */}
-          {hasMore && !isLoadingMore && (
-            <div ref={sentinelRef} className="h-10 flex items-center justify-center">
+          {/* Infinite scroll sentinel -- always rendered; hook gates loadMore */}
+          <div
+            ref={sentinelRef}
+            className="h-10 flex items-center justify-center"
+            aria-hidden="true"
+          >
+            {hasMore && !isLoadingMore && (
               <span className="font-terminal text-xs text-ink-muted">
                 Scroll for more...
               </span>
-            </div>
-          )}
-
-          {/* End of list */}
-          {!hasMore && bookmarks.length > 0 && !isLoading && (
-            <div className="py-4 text-center">
-              <span className="font-terminal text-xs text-ink-muted">
-              </span>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Empty state */}
           {!isLoading && bookmarks.length === 0 && user && (
