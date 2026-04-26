@@ -32,6 +32,7 @@ export interface Bookmark {
   link: string;
   url?: string; // alias for link
   title: string | null;
+  title_en?: string | null;
   domain: string;
   saves_count: number;
   created_at: string;

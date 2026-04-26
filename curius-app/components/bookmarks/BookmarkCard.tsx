@@ -9,15 +9,14 @@ import type { Bookmark } from '@/lib/supabase';
 
 interface BookmarkTag {
   topic: string;
-  subtopic?: string;
+  subtopic?: string | null;
 }
 
 interface BookmarkWithMeta extends Bookmark {
-  tags?: BookmarkTag[];
+  bookmark_tags_v2?: BookmarkTag[];
   saved_by_users?: string[];
   first_saved_at?: string;
   first_saved_by?: string;
-  title_en?: string | null;
 }
 
 interface BookmarkCardProps {
@@ -90,10 +89,10 @@ export function BookmarkCard({
           </div>
 
           {/* Category */}
-          {bookmark.tags && bookmark.tags.length > 0 && (
+          {bookmark.bookmark_tags_v2 && bookmark.bookmark_tags_v2.length > 0 && (
             <CategoryBadge
-              topic={bookmark.tags[0].topic}
-              subtopic={bookmark.tags[0].subtopic}
+              topic={bookmark.bookmark_tags_v2[0].topic}
+              subtopic={bookmark.bookmark_tags_v2[0].subtopic ?? undefined}
               size="sm"
             />
           )}
