@@ -13,10 +13,9 @@ interface DomainFaviconProps {
 export function DomainFavicon({ domain, size = 16, className = '' }: DomainFaviconProps) {
   const [hasError, setHasError] = useState(false);
 
-  const token = process.env.NEXT_PUBLIC_LOGODEV_KEY || 'pk_X-1ZO13GSgeOoUrIuJ6GMQ';
-  const logoUrl = `https://img.logo.dev/${domain}?token=${token}`;
+  const token = process.env.NEXT_PUBLIC_LOGODEV_KEY;
 
-  if (hasError) {
+  if (hasError || !token) {
     return (
       <Globe
         className={`text-ink-muted ${className}`}
@@ -24,6 +23,8 @@ export function DomainFavicon({ domain, size = 16, className = '' }: DomainFavic
       />
     );
   }
+
+  const logoUrl = `https://img.logo.dev/${domain}?token=${token}`;
 
   return (
     <Image

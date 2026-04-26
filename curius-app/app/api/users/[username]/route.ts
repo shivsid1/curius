@@ -79,14 +79,30 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         );
       }
 
-      // Transform the data
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      bookmarks = bookmarksData?.map((ub: any) => ({
-        ...ub.bookmarks,
-        saved_at: ub.saved_at,
-        page_number: ub.page_number,
-        discovered_from: ub.discovered_from,
-      })) || [];
+      type BookmarkRef = {
+        id: number;
+        url: string;
+        title: string | null;
+        domain: string;
+        saves_count: number;
+      };
+
+      type UserBookmarkRow = {
+        saved_at: string;
+        page_number: number | null;
+        discovered_from: string | null;
+        bookmarks: BookmarkRef | BookmarkRef[] | null;
+      };
+
+      bookmarks = (bookmarksData as unknown as UserBookmarkRow[] | null)?.map((ub) => {
+        const ref = Array.isArray(ub.bookmarks) ? ub.bookmarks[0] ?? null : ub.bookmarks;
+        return {
+          ...ref,
+          saved_at: ub.saved_at,
+          page_number: ub.page_number,
+          discovered_from: ub.discovered_from,
+        };
+      }) || [];
 
       const totalPages = count ? Math.ceil(count / limit) : 0;
       bookmarksPagination = {
