@@ -27,7 +27,7 @@
     "tag:brev": "node scripts/tag-brev-gpu.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.75.1",
+    "@supabase/supabase-js": "^2.104.1",
     "@types/d3": "^7.4.3",
     "cheerio": "^1.1.2",
     "class-variance-authority": "^0.7.1",
