@@ -62,6 +62,13 @@ export async function GET(request: NextRequest) {
       attempts++;
     }
 
+    if (bookmark.title && CHINESE_REGEX.test(bookmark.title)) {
+      return NextResponse.json(
+        { error: 'No English-titled bookmark found, try again' },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json({
       data: bookmark,
       meta: {

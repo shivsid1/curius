@@ -9,6 +9,11 @@ export default function LaunchPage() {
 
   const handleFire = useCallback(async () => {
     if (isFiring) return;
+
+    // Reserve the popup synchronously inside the user-gesture click handler
+    // so browsers don't block it after async work completes.
+    const popup = window.open('', '_blank');
+
     setIsFiring(true);
     setDestination(null);
 
@@ -32,7 +37,11 @@ export default function LaunchPage() {
 
           // Launch after showing destination
           setTimeout(() => {
-            window.open(data.data.link, '_blank');
+            if (popup && !popup.closed) {
+              popup.location.href = data.data.link;
+            } else {
+              window.open(data.data.link, '_blank');
+            }
             // Reset
             setTimeout(() => {
               setIsFiring(false);
@@ -43,9 +52,12 @@ export default function LaunchPage() {
             }, 1000);
           }, 1500);
         }, 1200);
+      } else if (popup && !popup.closed) {
+        popup.close();
       }
     } catch (err) {
       console.error('Failed to fetch random bookmark:', err);
+      if (popup && !popup.closed) popup.close();
       setIsFiring(false);
     }
   }, [isFiring]);

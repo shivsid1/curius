@@ -45,10 +45,31 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter to bookmarks with 2+ recent saves and sort by count
-    const trendingIds = Object.entries(saveCounts)
+    let trendingIds = Object.entries(saveCounts)
       .filter(([, count]) => count >= 2)
       .sort((a, b) => b[1] - a[1])
       .map(([id, count]) => ({ id: parseInt(id), recentSaves: count }));
+
+    // Apply domain filter BEFORE pagination so page 1 isn't empty when matches
+    // exist in later pages.
+    if (domain && trendingIds.length > 0) {
+      const { data: domainMatches, error: domainError } = await supabase
+        .from('bookmarks')
+        .select('id')
+        .in('id', trendingIds.map(t => t.id))
+        .ilike('domain', `%${domain}%`);
+
+      if (domainError) {
+        console.error('Domain filter query error:', domainError);
+        return NextResponse.json(
+          { error: 'Failed to filter by domain', details: domainError.message },
+          { status: 500 }
+        );
+      }
+
+      const allowed = new Set((domainMatches || []).map(b => b.id));
+      trendingIds = trendingIds.filter(t => allowed.has(t.id));
+    }
 
     const total = trendingIds.length;
     const totalPages = Math.ceil(total / limit);
@@ -63,16 +84,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch bookmark details
-    let query = supabase
+    const { data: bookmarks, error: bookmarksError } = await supabase
       .from('bookmarks')
       .select('*')
       .in('id', paginatedIds.map(p => p.id));
-
-    if (domain) {
-      query = query.ilike('domain', `%${domain}%`);
-    }
-
-    const { data: bookmarks, error: bookmarksError } = await query;
 
     if (bookmarksError) {
       console.error('Bookmarks query error:', bookmarksError);
