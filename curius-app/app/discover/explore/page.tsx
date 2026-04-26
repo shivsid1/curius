@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowDownWideNarrow, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowDownWideNarrow } from 'lucide-react';
 import { CategoryNav } from '@/components/categories/CategoryNav';
 import { BookmarkList } from '@/components/bookmarks/BookmarkList';
 import { BookmarkListSkeleton } from '@/components/bookmarks/BookmarkSkeleton';
@@ -18,15 +18,14 @@ export default function ExplorePage() {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(null);
   const [sort, setSort] = useState('recent');
-  const [page, setPage] = useState(1);
 
   const { topics, isLoading: topicsLoading } = useTopics();
-  const { bookmarks, pagination, isLoading } = useBookmarksByTopic({
-    topic: selectedTopic,
-    subtopic: selectedSubtopic,
-    sort,
-    initialPage: page,
-  });
+  const { bookmarks, pagination, isLoading, isLoadingMore, hasMore, loadMore } =
+    useBookmarksByTopic({
+      topic: selectedTopic,
+      subtopic: selectedSubtopic,
+      sort,
+    });
 
   const handleSelectTopic = (topic: string, subtopic?: string) => {
     if (selectedTopic === topic && !subtopic) {
@@ -36,12 +35,10 @@ export default function ExplorePage() {
       setSelectedTopic(topic);
       setSelectedSubtopic(subtopic ?? null);
     }
-    setPage(1);
   };
 
   const handleSort = (value: string) => {
     setSort(value);
-    setPage(1);
   };
 
   const heading = selectedSubtopic
@@ -82,7 +79,6 @@ export default function ExplorePage() {
               onClick={() => {
                 setSelectedTopic(null);
                 setSelectedSubtopic(null);
-                setPage(1);
               }}
               className={cn(
                 'relative shrink-0 py-1.5 text-sm font-terminal whitespace-nowrap transition-colors',
@@ -143,49 +139,13 @@ export default function ExplorePage() {
         ) : (
           <BookmarkList
             bookmarks={bookmarks}
-            isLoading={isLoading}
-            hasMore={false}
+            isLoading={isLoadingMore}
+            hasMore={hasMore}
+            onLoadMore={loadMore}
             variant="compact"
             showUsers={false}
             emptyMessage="No bookmarks found for this topic."
           />
-        )}
-
-        {/* Pagination controls */}
-        {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-3 mt-8 pb-4">
-            <button
-              onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              disabled={!pagination.hasPrev}
-              className={cn(
-                'flex items-center gap-1 px-3 py-1.5 rounded-md font-terminal text-xs transition-colors',
-                pagination.hasPrev
-                  ? 'text-ink hover:bg-cream-dark'
-                  : 'text-ink-muted/40 cursor-not-allowed'
-              )}
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              Previous
-            </button>
-
-            <span className="font-terminal text-xs text-ink-muted">
-              {pagination.page} / {pagination.totalPages}
-            </span>
-
-            <button
-              onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              disabled={!pagination.hasNext}
-              className={cn(
-                'flex items-center gap-1 px-3 py-1.5 rounded-md font-terminal text-xs transition-colors',
-                pagination.hasNext
-                  ? 'text-ink hover:bg-cream-dark'
-                  : 'text-ink-muted/40 cursor-not-allowed'
-              )}
-            >
-              Next
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
         )}
       </div>
 

@@ -57,7 +57,6 @@ interface UseBookmarksOptions {
   topic?: string | null;
   subtopic?: string | null;
   sort?: string;
-  initialPage?: number;
   limit?: number;
 }
 
@@ -65,7 +64,6 @@ export function useBookmarksByTopic({
   topic,
   subtopic,
   sort = 'recent',
-  initialPage = 1,
   limit = 20,
 }: UseBookmarksOptions = {}) {
   const [bookmarks, setBookmarks] = useState<BookmarkWithTags[]>([]);
@@ -115,15 +113,16 @@ export function useBookmarksByTopic({
     [topic, subtopic, sort, limit]
   );
 
+  // Reset to page 1 whenever filter inputs change.
   useEffect(() => {
-    fetchBookmarks(initialPage);
-  }, [fetchBookmarks, initialPage]);
+    fetchBookmarks(1);
+  }, [fetchBookmarks]);
 
   const loadMore = useCallback(() => {
-    if (pagination?.hasNext && !isLoadingMore) {
+    if (pagination?.hasNext && !isLoadingMore && !isLoading) {
       fetchBookmarks(pagination.page + 1, true);
     }
-  }, [pagination, isLoadingMore, fetchBookmarks]);
+  }, [pagination, isLoadingMore, isLoading, fetchBookmarks]);
 
   return {
     bookmarks,

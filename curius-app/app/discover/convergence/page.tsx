@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import { ConvergenceFilters } from '@/components/convergence/ConvergenceFilters';
 import { ConvergenceCard } from '@/components/convergence/ConvergenceCard';
 import { BookmarkListSkeleton } from '@/components/bookmarks/BookmarkSkeleton';
-import { useConvergence } from '@/lib/hooks';
+import { useConvergence, useInfiniteScroll } from '@/lib/hooks';
 
 export default function ConvergencePage() {
   const [days, setDays] = useState(7);
@@ -13,32 +13,10 @@ export default function ConvergencePage() {
   const { bookmarks, pagination, isLoading, isLoadingMore, hasMore, loadMore } =
     useConvergence({ days, domain: domain || undefined });
 
-  // Infinite scroll sentinel
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const target = entries[0];
-      if (target.isIntersecting && hasMore && !isLoading && !isLoadingMore) {
-        loadMore();
-      }
-    },
-    [hasMore, isLoading, isLoadingMore, loadMore]
-  );
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: '100px',
-      threshold: 0,
-    });
-
-    if (sentinelRef.current) {
-      observer.observe(sentinelRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [handleObserver]);
+  const sentinelRef = useInfiniteScroll(loadMore, {
+    hasMore,
+    isLoading: isLoading || isLoadingMore,
+  });
 
   return (
     <div>
@@ -81,22 +59,18 @@ export default function ConvergencePage() {
             </div>
           )}
 
-          {/* Infinite scroll sentinel */}
-          {hasMore && !isLoadingMore && (
-            <div ref={sentinelRef} className="h-10 flex items-center justify-center">
+          {/* Infinite scroll sentinel -- always rendered; hook gates loadMore */}
+          <div
+            ref={sentinelRef}
+            className="h-10 flex items-center justify-center"
+            aria-hidden="true"
+          >
+            {hasMore && !isLoadingMore && (
               <span className="font-terminal text-xs text-ink-muted">
                 Scroll for more...
               </span>
-            </div>
-          )}
-
-          {/* End of list */}
-          {!hasMore && bookmarks.length > 0 && !isLoading && (
-            <div className="py-4 text-center">
-              <span className="font-terminal text-xs text-ink-muted">
-              </span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
     </div>
