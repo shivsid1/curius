@@ -8,6 +8,26 @@ function filterNonChinese<T extends { title?: string | null }>(items: T[]): T[] 
   return items.filter((item) => !item.title || !CHINESE_REGEX.test(item.title));
 }
 
+// Enrich bookmarks with first saver info via Postgres function
+async function enrichWithFirstSaver<T extends { id: number }>(bookmarks: T[]): Promise<(T & { first_saved_at?: string; first_saved_by?: string })[]> {
+  if (bookmarks.length === 0) return bookmarks;
+
+  const ids = bookmarks.map(b => b.id);
+  const { data: savers } = await supabase.rpc('get_first_savers', { bookmark_ids: ids });
+
+  if (!savers || savers.length === 0) return bookmarks;
+
+  type Saver = { bookmark_id: number; saved_at: string; username: string };
+  const saverMap = new Map<number, Saver>(savers.map((s: Saver) => [s.bookmark_id, s]));
+
+  return bookmarks.map(b => {
+    const saver = saverMap.get(b.id);
+    return saver
+      ? { ...b, first_saved_at: saver.saved_at, first_saved_by: saver.username }
+      : b;
+  });
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -45,9 +65,10 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      const enriched = await enrichWithFirstSaver(filterNonChinese(data || []));
       const totalPages = count ? Math.ceil(count / limit) : 0;
       return NextResponse.json({
-        data: filterNonChinese(data || []),
+        data: enriched,
         pagination: { page, limit, total: count || 0, totalPages, hasNext: page < totalPages, hasPrev: page > 1 },
       }, {
         headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' },
@@ -114,8 +135,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const enriched = await enrichWithFirstSaver(filterNonChinese(bookmarks || []));
     return NextResponse.json({
-      data: filterNonChinese(bookmarks || []),
+      data: enriched,
       pagination: { page, limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 },
       filters: { topic, subtopic },
     }, {

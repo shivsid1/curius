@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { ArrowDownWideNarrow } from 'lucide-react';
 import { useSources } from '@/lib/hooks';
 import { SourceCard } from '@/components/sources/SourceCard';
@@ -50,10 +51,21 @@ export default function SourcesPage() {
 
   return (
     <div>
-      <h1 className="font-serif text-xl font-semibold text-ink mb-2">Sources</h1>
-      <p className="font-scholarly text-sm text-ink-muted mb-6">
-        Browse by publication -- see which domains the community reads most.
-      </p>
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <h1 className="font-serif text-xl font-semibold text-ink mb-2">Roots</h1>
+          <p className="font-scholarly text-sm text-ink-muted">
+            The most popular root sources people are indexing.
+          </p>
+        </div>
+        <Image
+          src="/illustrations/scholar.png"
+          alt=""
+          width={110}
+          height={110}
+          className="hidden md:block -mb-2"
+        />
+      </div>
 
       {/* Sort controls */}
       <div className="flex items-center gap-2 mb-6">
@@ -113,8 +125,7 @@ export default function SourcesPage() {
           {!hasMore && items.length > 0 && !isLoading && (
             <div className="py-4 text-center">
               <span className="font-terminal text-xs text-ink-muted">
-                -- End of list --
-              </span>
+                  </span>
             </div>
           )}
         </div>

@@ -5,7 +5,6 @@ import { ExternalLink, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DomainFavicon } from '@/components/shared/DomainFavicon';
 import { CategoryBadge } from '@/components/categories/CategoryBadge';
-import { UserChipGroup } from '@/components/users/UserChip';
 import type { Bookmark } from '@/lib/supabase';
 
 interface BookmarkTag {
@@ -16,6 +15,9 @@ interface BookmarkTag {
 interface BookmarkWithMeta extends Bookmark {
   tags?: BookmarkTag[];
   saved_by_users?: string[];
+  first_saved_at?: string;
+  first_saved_by?: string;
+  title_en?: string | null;
 }
 
 interface BookmarkCardProps {
@@ -23,6 +25,22 @@ interface BookmarkCardProps {
   variant?: 'compact' | 'expanded';
   showUsers?: boolean;
   className?: string;
+}
+
+function formatRelativeDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  if (diffDays < 365) {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export function BookmarkCard({
@@ -48,8 +66,8 @@ export function BookmarkCard({
             rel="noopener noreferrer"
             className="group/link flex-1"
           >
-            <h3 className="font-serif text-[15px] font-medium text-ink leading-snug group-hover/link:text-terminal-cyan transition-colors line-clamp-2">
-              {bookmark.title || 'Untitled'}
+            <h3 className="font-serif text-[15px] font-medium text-ink leading-snug group-hover/link:text-ink-light transition-colors line-clamp-2">
+              {bookmark.title_en || bookmark.title || 'Untitled'}
             </h3>
           </Link>
           <Link
@@ -80,25 +98,29 @@ export function BookmarkCard({
             />
           )}
 
+          {/* First saved */}
+          {bookmark.first_saved_at && (
+            <span className="font-terminal text-ink-muted">
+              {formatRelativeDate(bookmark.first_saved_at)}
+            </span>
+          )}
+
           {/* Saves */}
           {bookmark.saves_count > 1 && (
             <span className="flex items-center gap-1 ml-auto font-terminal text-ink-muted">
               <Users className="w-3 h-3" />
-              <span className="text-terminal-cyan font-medium">{bookmark.saves_count}</span>
+              <span className="text-ink font-medium">{bookmark.saves_count}</span>
             </span>
           )}
         </div>
 
-        {/* Expanded: users */}
+        {/* Expanded: anonymous curator count */}
         {variant === 'expanded' && showUsers && bookmark.saved_by_users && bookmark.saved_by_users.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-border/40">
-            <div className="flex items-center gap-2">
-              <span className="font-terminal text-ink-muted">Saved by:</span>
-              <UserChipGroup
-                users={bookmark.saved_by_users.map((u) => ({ username: u }))}
-                maxDisplay={5}
-              />
-            </div>
+          <div className="mt-2 flex items-center gap-1.5">
+            <Users className="w-3 h-3 text-ink-muted" />
+            <span className="font-terminal text-xs text-ink-muted">
+              saved by {bookmark.saved_by_users.length} curator{bookmark.saved_by_users.length !== 1 ? 's' : ''}
+            </span>
           </div>
         )}
       </div>

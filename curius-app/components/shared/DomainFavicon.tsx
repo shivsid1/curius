@@ -13,8 +13,8 @@ interface DomainFaviconProps {
 export function DomainFavicon({ domain, size = 16, className = '' }: DomainFaviconProps) {
   const [hasError, setHasError] = useState(false);
 
-  // Use logo.dev API for brand logos
-  const logoUrl = `https://img.logo.dev/${domain}?token=pk_X-1ZO13GSgeOoUrIuJ6GMQ`;
+  const token = process.env.NEXT_PUBLIC_LOGODEV_KEY || 'pk_X-1ZO13GSgeOoUrIuJ6GMQ';
+  const logoUrl = `https://img.logo.dev/${domain}?token=${token}`;
 
   if (hasError) {
     return (

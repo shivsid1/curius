@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { BookmarkCard } from './BookmarkCard';
 import { BookmarkSkeleton } from './BookmarkSkeleton';
 import type { Bookmark } from '@/lib/supabase';
@@ -69,7 +70,14 @@ export function BookmarkList({
 
   if (!isLoading && bookmarks.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-lg p-8 text-center shadow-paper">
+      <div className="bg-card border border-border rounded-lg py-12 px-8 text-center shadow-paper">
+        <Image
+          src="/illustrations/hiker.png"
+          alt=""
+          width={140}
+          height={140}
+          className="mx-auto mb-4"
+        />
         <p className="font-scholarly text-ink-muted">{emptyMessage}</p>
       </div>
     );
@@ -108,7 +116,6 @@ export function BookmarkList({
       {!hasMore && bookmarks.length > 0 && !isLoading && (
         <div className="py-4 text-center">
           <span className="font-terminal text-xs text-ink-muted">
-            -- End of list --
           </span>
         </div>
       )}

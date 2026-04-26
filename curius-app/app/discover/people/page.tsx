@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { ArrowDownWideNarrow } from 'lucide-react';
 import { usePeople } from '@/lib/hooks';
 import { CuratorCard } from '@/components/people/CuratorCard';
@@ -50,10 +51,21 @@ export default function PeoplePage() {
 
   return (
     <div>
-      <h1 className="font-serif text-xl font-semibold text-ink mb-2">People</h1>
-      <p className="font-scholarly text-sm text-ink-muted mb-6">
-        Discover curators by what they read -- find people with taste.
-      </p>
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <h1 className="font-serif text-xl font-semibold text-ink mb-2">People</h1>
+          <p className="font-scholarly text-sm text-ink-muted">
+            Discover curators by what they read. Find people with taste.
+          </p>
+        </div>
+        <Image
+          src="/illustrations/newton.png"
+          alt=""
+          width={100}
+          height={100}
+          className="hidden md:block -mb-2"
+        />
+      </div>
 
       {/* Sort controls */}
       <div className="flex items-center gap-2 mb-6">
@@ -113,8 +125,7 @@ export default function PeoplePage() {
           {!hasMore && items.length > 0 && !isLoading && (
             <div className="py-4 text-center">
               <span className="font-terminal text-xs text-ink-muted">
-                -- End of list --
-              </span>
+                  </span>
             </div>
           )}
         </div>

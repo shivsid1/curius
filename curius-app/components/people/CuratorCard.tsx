@@ -10,12 +10,12 @@ interface CuratorCardProps {
 
 const getAvatarColor = (name: string) => {
   const colors = [
-    'bg-blue-100 text-blue-700',
-    'bg-green-100 text-green-700',
-    'bg-purple-100 text-purple-700',
-    'bg-amber-100 text-amber-700',
-    'bg-rose-100 text-rose-700',
-    'bg-cyan-100 text-cyan-700',
+    'bg-blue-50 text-blue-900',
+    'bg-indigo-50 text-indigo-900',
+    'bg-sky-50 text-sky-900',
+    'bg-slate-100 text-slate-800',
+    'bg-blue-100 text-blue-800',
+    'bg-indigo-100 text-indigo-800',
   ];
   const index = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return colors[index % colors.length];
@@ -42,7 +42,7 @@ export function CuratorCard({ curator }: CuratorCardProps) {
         <div className="min-w-0">
           <Link
             href={`/u/${curator.username}`}
-            className="font-serif text-[15px] font-medium text-ink hover:text-terminal-cyan transition-colors"
+            className="font-serif text-[15px] font-medium text-ink hover:text-ink-light transition-colors"
           >
             {displayName}
           </Link>
@@ -53,7 +53,7 @@ export function CuratorCard({ curator }: CuratorCardProps) {
 
         <span className="flex items-center gap-1 ml-auto shrink-0 font-terminal text-xs text-ink-muted">
           <Bookmark className="w-3 h-3" />
-          <span className="text-terminal-cyan font-medium">{curator.bookmark_count}</span>
+          <span className="text-ink font-medium">{curator.bookmark_count}</span>
         </span>
       </div>
 

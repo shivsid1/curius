@@ -25,7 +25,7 @@ export function CategoryBadge({
   };
 
   const variantClasses = {
-    default: 'bg-cream-dark text-ink-light',
+    default: 'bg-accent text-ink-light',
     outline: 'bg-transparent text-ink-muted border border-border hover:border-ink-light',
     filled: 'bg-ink text-cream',
   };
@@ -36,7 +36,7 @@ export function CategoryBadge({
         'inline-flex items-center gap-1 font-terminal rounded-md transition-colors',
         sizeClasses[size],
         variantClasses[variant],
-        isClickable && 'cursor-pointer hover:bg-cream-dark/80',
+        isClickable && 'cursor-pointer hover:bg-accent/80',
         className
       )}
       onClick={onClick}

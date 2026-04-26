@@ -7,8 +7,8 @@ export class SupabaseSync {
   private client: SupabaseClient;
 
   constructor() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
     if (!url || !key) {
       throw new Error('Missing Supabase credentials. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_KEY');
@@ -45,6 +45,66 @@ export class SupabaseSync {
     return usernames;
   }
 
+  async getUsernamesByActivity(): Promise<string[]> {
+    const usernames: string[] = [];
+    let page = 0;
+    const pageSize = 1000;
+
+    // Try last_online first, fall back to bookmark_count if column doesn't exist
+    const sortColumn = await this.hasColumn('users', 'last_online') ? 'last_online' : 'bookmark_count';
+    Logger.info(`Sorting users by: ${sortColumn}`);
+
+    while (true) {
+      const { data, error } = await this.client
+        .from('users')
+        .select('username')
+        .order(sortColumn, { ascending: false, nullsFirst: false })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (error) {
+        Logger.error('Failed to fetch usernames by activity', error as Error);
+        break;
+      }
+
+      if (!data || data.length === 0) break;
+
+      usernames.push(...data.map((u) => u.username));
+      page++;
+
+      if (data.length < pageSize) break;
+    }
+
+    return usernames;
+  }
+
+  private async hasColumn(table: string, column: string): Promise<boolean> {
+    const { error } = await this.client
+      .from(table)
+      .select(column)
+      .limit(1);
+    return !error;
+  }
+
+  async bulkUpdateLastOnline(updates: Array<{ username: string; lastOnline: string }>): Promise<void> {
+    // Check if column exists first
+    if (!(await this.hasColumn('users', 'last_online'))) {
+      Logger.warn('last_online column does not exist, skipping updates');
+      return;
+    }
+    // Update in batches of 50
+    for (let i = 0; i < updates.length; i += 50) {
+      const batch = updates.slice(i, i + 50);
+      await Promise.all(
+        batch.map((u) =>
+          this.client
+            .from('users')
+            .update({ last_online: u.lastOnline })
+            .eq('username', u.username)
+        )
+      );
+    }
+  }
+
   async getUserId(username: string): Promise<number | null> {
     const { data, error } = await this.client
       .from('users')
@@ -56,18 +116,18 @@ export class SupabaseSync {
     return data.id;
   }
 
-  async createUser(username: string, firstName?: string, lastName?: string): Promise<number | null> {
+  async createUser(username: string, firstName?: string, lastName?: string, curiusId?: number): Promise<number | null> {
+    const record: Record<string, unknown> = {
+      username,
+      first_name: firstName || null,
+      last_name: lastName || null,
+      bookmark_count: 0,
+    };
+    if (curiusId) record.id = curiusId;
+
     const { data, error } = await this.client
       .from('users')
-      .upsert(
-        {
-          username,
-          first_name: firstName || null,
-          last_name: lastName || null,
-          bookmark_count: 0,
-        },
-        { onConflict: 'username' }
-      )
+      .upsert(record, { onConflict: 'username' })
       .select('id')
       .single();
 
@@ -255,21 +315,32 @@ export class SupabaseSync {
     title: string | null;
     domain: string;
   }>> {
-    // Get bookmarks that don't have tags yet
-    const { data, error } = await this.client
+    // Use a left join approach: fetch recent bookmarks, then check which lack tags
+    // Get a batch of bookmark IDs that might be untagged (most recent first)
+    const batchSize = limit * 5; // Fetch more than needed since some will be tagged
+    const { data: candidates, error: candError } = await this.client
       .from('bookmarks')
       .select('id, link, title, domain')
-      .not('id', 'in',
-        this.client.from('bookmark_tags_v2').select('bookmark_id')
-      )
-      .limit(limit);
+      .order('id', { ascending: false })
+      .limit(batchSize);
 
-    if (error) {
-      Logger.error('Failed to get untagged bookmarks', error as Error);
+    if (candError || !candidates || candidates.length === 0) {
+      if (candError) Logger.error('Failed to get bookmark candidates', candError as Error);
       return [];
     }
 
-    return data || [];
+    // Check which of these have tags
+    const ids = candidates.map((b) => b.id);
+    const { data: tagged } = await this.client
+      .from('bookmark_tags_v2')
+      .select('bookmark_id')
+      .in('bookmark_id', ids);
+
+    const taggedIds = new Set((tagged || []).map((t) => t.bookmark_id));
+
+    // Return those without tags
+    const untagged = candidates.filter((b) => !taggedIds.has(b.id));
+    return untagged.slice(0, limit);
   }
 
   async getRecentBookmarks(since: string, limit: number = 1000): Promise<Array<{
