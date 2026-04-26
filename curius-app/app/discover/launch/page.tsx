@@ -51,21 +51,23 @@ export default function LaunchPage() {
   }, [isFiring]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[65vh] px-4 -mt-4">
+    <div className="flex flex-col items-center justify-center min-h-[65vh] w-full px-4 -mt-4">
       {/* Cannon */}
-      <button
-        onClick={handleFire}
-        disabled={isFiring}
-        className="group relative cursor-pointer disabled:cursor-wait"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          ref={cannonRef}
-          src="/illustrations/cannon-still.png"
-          alt="Cannon"
-          className="w-48 h-48 md:w-64 md:h-64 transition-transform group-hover:scale-105 group-active:scale-95"
-        />
-      </button>
+      <div className="flex justify-center w-full">
+        <button
+          onClick={handleFire}
+          disabled={isFiring}
+          className="group relative cursor-pointer disabled:cursor-wait"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={cannonRef}
+            src="/illustrations/cannon-still.png"
+            alt="Cannon"
+            className="w-48 h-48 md:w-64 md:h-64 translate-x-2 transition-transform group-hover:scale-105 group-active:scale-95"
+          />
+        </button>
+      </div>
 
       {/* Copy */}
       {!destination ? (
@@ -75,7 +77,7 @@ export default function LaunchPage() {
           </h1>
           <p className="font-serif text-sm text-ink-muted leading-relaxed">
             Get fired into a random corner of the internet.
-            Sourced from {(174000).toLocaleString()}+ bookmarks saved by curious people.
+            Sourced from {(180000).toLocaleString()}+ bookmarks saved by curious people.
           </p>
           {!isFiring && (
             <button

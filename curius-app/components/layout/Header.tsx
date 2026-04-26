@@ -43,7 +43,7 @@ export function Header() {
             <span className="font-atlas text-2xl text-ink tracking-wide">
               Curius Atlas
             </span>
-            {bookmarkCount !== null && (
+            {bookmarkCount !== null && bookmarkCount > 0 && (
               <p className="font-terminal text-[10px] text-ink-muted -mt-0.5">
                 {formatCount(bookmarkCount)} bookmarks catalogued
               </p>
