@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-export const revalidate = 3600;
+// Reads searchParams (page/limit/sort) so must be dynamic.
+export const dynamic = 'force-dynamic';
 
 // Batch .in() queries to avoid URL length limits
 async function fetchTagsInBatches(bookmarkIds: number[]) {

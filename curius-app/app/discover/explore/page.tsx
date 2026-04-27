@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ArrowDownWideNarrow } from 'lucide-react';
 import { CategoryNav } from '@/components/categories/CategoryNav';
 import { BookmarkList } from '@/components/bookmarks/BookmarkList';
@@ -15,8 +16,17 @@ const SORT_OPTIONS = [
 ] as const;
 
 export default function ExplorePage() {
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(null);
+  return (
+    <Suspense fallback={<BookmarkListSkeleton count={5} />}>
+      <ExplorePageInner />
+    </Suspense>
+  );
+}
+
+function ExplorePageInner() {
+  const searchParams = useSearchParams();
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(searchParams.get('topic'));
+  const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(searchParams.get('subtopic'));
   const [sort, setSort] = useState('recent');
 
   const { topics, isLoading: topicsLoading } = useTopics();

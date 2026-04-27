@@ -56,8 +56,9 @@ export function LongTail() {
 
     const { width, height } = dimensions;
     const margin = { top: 20, right: 30, bottom: 50, left: 60 };
-    const w = width - margin.left - margin.right;
-    const h = height - margin.top - margin.bottom;
+    const w = Math.max(0, width - margin.left - margin.right);
+    const h = Math.max(0, height - margin.top - margin.bottom);
+    if (w === 0 || h === 0) return;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
@@ -186,10 +187,6 @@ export function LongTail() {
         <div>
           <span className="font-terminal text-2xl text-ink font-medium">{data.stats.singleSavePercent}%</span>
           <p className="font-terminal text-[10px] text-ink-muted">saved by only one person</p>
-        </div>
-        <div>
-          <span className="font-terminal text-2xl text-ink font-medium">{data.stats.totalBookmarks.toLocaleString()}</span>
-          <p className="font-terminal text-[10px] text-ink-muted">total bookmarks</p>
         </div>
         <div>
           <span className="font-terminal text-2xl text-ink font-medium">{data.stats.maxSaves}</span>

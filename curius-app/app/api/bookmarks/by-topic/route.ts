@@ -40,11 +40,13 @@ export async function GET(request: NextRequest) {
 
     // No topic: return bookmarks with tags, sorted
     if (!topic) {
+      // Inner join so untagged (newest, unclassified) bookmarks don't show up
+      // first under sort=recent and leave the cards without category badges.
       let query = supabase
         .from('bookmarks')
         .select(`
           *,
-          bookmark_tags_v2 (topic, subtopic)
+          bookmark_tags_v2!inner (topic, subtopic)
         `, { count: 'exact' });
 
       if (sort === 'popular') {

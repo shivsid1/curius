@@ -55,8 +55,11 @@ export function Zeitgeist() {
 
     const { width, height } = dimensions;
     const margin = { top: 10, right: 20, bottom: 40, left: 50 };
-    const w = width - margin.left - margin.right;
-    const h = height - margin.top - margin.bottom;
+    // Guard against initial 0-width render before container lays out --
+    // negative width on <rect> throws an SVG error in the console.
+    const w = Math.max(0, width - margin.left - margin.right);
+    const h = Math.max(0, height - margin.top - margin.bottom);
+    if (w === 0 || h === 0) return;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();

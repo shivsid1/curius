@@ -100,24 +100,20 @@ export async function GET(request: NextRequest) {
     // Create a map for quick lookup
     const bookmarkMap = new Map((bookmarks || []).map(b => [b.id, b]));
 
-    // Fetch curators (usernames) for the paginated bookmarks
+    // Fetch save timestamps (no usernames -- we don't expose curators by name).
     const paginatedBookmarkIds = paginatedIds.map(p => p.id);
-    const { data: savers } = await supabase
+    const { data: saves } = await supabase
       .from('user_bookmarks')
-      .select('bookmark_id, saved_at, users:user_id (username)')
+      .select('bookmark_id, saved_at')
       .in('bookmark_id', paginatedBookmarkIds)
       .order('saved_at', { ascending: false });
 
-    type SaverRow = { bookmark_id: number; users: { username: string } | { username: string }[] | null };
-    const saversByBookmark = new Map<number, string[]>();
-    for (const row of (savers || []) as SaverRow[]) {
-      const userField = Array.isArray(row.users) ? row.users[0] : row.users;
-      const username = userField?.username;
-      if (!username) continue;
-      const list = saversByBookmark.get(row.bookmark_id) ?? [];
-      if (list.length < 5 && !list.includes(username)) {
-        list.push(username);
-        saversByBookmark.set(row.bookmark_id, list);
+    const datesByBookmark = new Map<number, string[]>();
+    for (const row of (saves || []) as { bookmark_id: number; saved_at: string }[]) {
+      const list = datesByBookmark.get(row.bookmark_id) ?? [];
+      if (list.length < 5) {
+        list.push(row.saved_at);
+        datesByBookmark.set(row.bookmark_id, list);
       }
     }
 
@@ -131,7 +127,7 @@ export async function GET(request: NextRequest) {
             ...bookmark,
             recent_saves: recentSaves,
             convergence_score: recentSaves,
-            saved_by_users: saversByBookmark.get(id) ?? [],
+            saved_at_dates: datesByBookmark.get(id) ?? [],
           };
         })
         .filter((item): item is NonNullable<typeof item> => item !== null)

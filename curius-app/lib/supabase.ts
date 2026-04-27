@@ -54,7 +54,7 @@ export interface BookmarkConvergence {
   domain: string;
   saves_count: number;
   convergence_score: number;
-  saved_by_users: string[];
+  saved_at_dates: string[];
   created_at?: string;
 }
 

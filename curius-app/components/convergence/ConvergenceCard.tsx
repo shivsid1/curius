@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ExternalLink, TrendingUp, Users } from 'lucide-react';
+import { ExternalLink, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DomainFavicon } from '@/components/shared/DomainFavicon';
 import type { BookmarkConvergence } from '@/lib/supabase';
@@ -11,8 +11,23 @@ interface ConvergenceCardProps {
   className?: string;
 }
 
+function formatRelativeDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return '1d ago';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 export function ConvergenceCard({ bookmark, className }: ConvergenceCardProps) {
   const recentSaves = (bookmark as BookmarkConvergence & { recent_saves?: number }).recent_saves || bookmark.saves_count;
+  const savedAt = bookmark.saved_at_dates ?? [];
+  const visibleDates = savedAt.slice(0, 4);
+  const extraCount = savedAt.length - visibleDates.length;
 
   return (
     <article
@@ -65,13 +80,21 @@ export function ConvergenceCard({ bookmark, className }: ConvergenceCardProps) {
           </Link>
         </div>
 
-        {/* Curator count */}
-        {bookmark.saved_by_users && bookmark.saved_by_users.length > 0 && (
-          <div className="mt-2 flex items-center gap-1.5">
-            <Users className="w-3 h-3 text-ink-muted" />
-            <span className="font-terminal text-xs text-ink-muted">
-              saved by {bookmark.saved_by_users.length} curator{bookmark.saved_by_users.length !== 1 ? 's' : ''}
-            </span>
+        {/* Save timestamps */}
+        {visibleDates.length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <span className="font-terminal text-[10px] text-ink-muted uppercase tracking-wider mr-1">saved</span>
+            {visibleDates.map((d, i) => (
+              <span
+                key={i}
+                className="font-terminal text-[10px] text-ink-muted bg-cream-dark/50 border border-border/50 rounded px-1.5 py-0.5"
+              >
+                {formatRelativeDate(d)}
+              </span>
+            ))}
+            {extraCount > 0 && (
+              <span className="font-terminal text-[10px] text-ink-muted">+{extraCount} more</span>
+            )}
           </div>
         )}
       </div>

@@ -1,11 +1,21 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 export default function LaunchPage() {
   const [isFiring, setIsFiring] = useState(false);
   const [destination, setDestination] = useState<{ title: string; domain: string; link: string } | null>(null);
+  const [bookmarkCount, setBookmarkCount] = useState<number | null>(null);
   const cannonRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then((r) => r.json())
+      .then((d) => {
+        if (typeof d.bookmarks === 'number' && d.bookmarks > 0) setBookmarkCount(d.bookmarks);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleFire = useCallback(async () => {
     if (isFiring) return;
@@ -89,7 +99,7 @@ export default function LaunchPage() {
           </h1>
           <p className="font-serif text-sm text-ink-muted leading-relaxed">
             Get fired into a random corner of the internet.
-            Sourced from {(180000).toLocaleString()}+ bookmarks saved by curious people.
+            Sourced from {bookmarkCount ? bookmarkCount.toLocaleString() : 'thousands of'} bookmarks saved by curious people.
           </p>
           {!isFiring && (
             <button
