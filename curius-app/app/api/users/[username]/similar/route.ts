@@ -23,7 +23,7 @@ export async function GET(
 
     const { data: inputUser, error: userErr } = await supabase
       .from('users')
-      .select('id, username, display_name, bookmark_count')
+      .select('id, username, first_name, last_name, bookmark_count')
       .ilike('username', cleanUsername)
       .maybeSingle();
 
@@ -97,7 +97,7 @@ export async function GET(
 
     const { data: candidates } = await supabase
       .from('users')
-      .select('id, username, display_name, profile_url, bookmark_count, last_online')
+      .select('id, username, first_name, last_name, bookmark_count')
       .in('id', ranked.map((r) => r.id));
 
     const byId = new Map((candidates || []).map((u) => [u.id, u]));

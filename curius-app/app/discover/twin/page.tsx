@@ -9,18 +9,22 @@ import { cn } from '@/lib/utils';
 interface SimilarUser {
   id: number;
   username: string;
-  display_name: string | null;
-  profile_url: string | null;
+  first_name: string | null;
+  last_name: string | null;
   bookmark_count: number;
-  last_online: string | null;
   shared_bookmarks: number;
   affinity: number;
 }
 
 interface SimilarResponse {
-  user: { username: string; display_name: string | null; bookmark_count: number };
+  user: { username: string; first_name: string | null; last_name: string | null; bookmark_count: number };
   seedBookmarks: number;
   results: SimilarUser[];
+}
+
+function fullName(u: { first_name?: string | null; last_name?: string | null; username: string }) {
+  const name = [u.first_name, u.last_name].filter(Boolean).join(' ').trim();
+  return name || u.username;
 }
 
 const getAvatarColor = (name: string) => {
@@ -146,7 +150,7 @@ export default function TwinPage() {
           </p>
           <div>
             {data.results.map((curator) => {
-              const display = curator.display_name || curator.username;
+              const display = fullName(curator);
               const initial = display.charAt(0).toUpperCase();
               return (
                 <div
