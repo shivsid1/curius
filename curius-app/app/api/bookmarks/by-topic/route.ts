@@ -9,8 +9,10 @@ function filterNonChinese<T extends { title?: string | null }>(items: T[]): T[] 
   return items.filter((item) => !item.title || !CHINESE_REGEX.test(item.title));
 }
 
-// Enrich bookmarks with first saver info via Postgres function
-async function enrichWithFirstSaver<T extends { id: number }>(bookmarks: T[]): Promise<(T & { first_saved_at?: string; first_saved_by?: string })[]> {
+// Enrich bookmarks with the timestamp of the first save (when the bookmark
+// entered the corpus). Username is intentionally not returned -- we don't
+// expose curator identities on the public explore feed.
+async function enrichWithFirstSaver<T extends { id: number }>(bookmarks: T[]): Promise<(T & { first_saved_at?: string })[]> {
   if (bookmarks.length === 0) return bookmarks;
 
   const ids = bookmarks.map(b => b.id);
@@ -18,14 +20,14 @@ async function enrichWithFirstSaver<T extends { id: number }>(bookmarks: T[]): P
 
   if (!savers || savers.length === 0) return bookmarks;
 
-  type Saver = { bookmark_id: number; saved_at: string; username: string };
-  const saverMap = new Map<number, Saver>(savers.map((s: Saver) => [s.bookmark_id, s]));
+  type Saver = { bookmark_id: number; saved_at: string };
+  const saverMap = new Map<number, string>(
+    (savers as Saver[]).map((s) => [s.bookmark_id, s.saved_at])
+  );
 
   return bookmarks.map(b => {
-    const saver = saverMap.get(b.id);
-    return saver
-      ? { ...b, first_saved_at: saver.saved_at, first_saved_by: saver.username }
-      : b;
+    const savedAt = saverMap.get(b.id);
+    return savedAt ? { ...b, first_saved_at: savedAt } : b;
   });
 }
 
