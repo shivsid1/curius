@@ -57,7 +57,7 @@ export function DiscoverShell({ children }: DiscoverShellProps) {
     <div className="min-h-screen bg-background">
       {/* Tab Navigation */}
       <nav>
-        <div className="container px-4 md:px-6">
+        <div className="container mx-auto px-4 md:px-6">
           <div className="flex items-center gap-0">
             {tabs.map((tab) => {
               const isActive = pathname.startsWith(tab.href);
@@ -89,7 +89,7 @@ export function DiscoverShell({ children }: DiscoverShellProps) {
       </nav>
 
       {/* Main Content */}
-      <main className="container px-4 md:px-6 py-8">
+      <main className="container mx-auto px-4 md:px-6 py-8">
         {children}
       </main>
 

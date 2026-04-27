@@ -86,7 +86,7 @@ export default function LaunchPage() {
             ref={cannonRef}
             src="/illustrations/cannon-still.png"
             alt="Cannon"
-            className="w-48 h-48 md:w-64 md:h-64 translate-x-2 transition-transform group-hover:scale-105 group-active:scale-95"
+            className="w-48 h-48 md:w-64 md:h-64 transition-transform group-hover:scale-105 group-active:scale-95"
           />
         </button>
       </div>
