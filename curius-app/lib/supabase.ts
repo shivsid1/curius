@@ -14,6 +14,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// Server-only client with the service-role key. Use for endpoints that need
+// to read RLS-restricted tables (e.g., user_bookmarks for the similarity
+// query). NEVER import this in client components.
+export function getServiceSupabase() {
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+  if (!serviceKey) throw new Error('SUPABASE_SERVICE_KEY missing');
+  return createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 // Database types
 export interface User {
   id: number;

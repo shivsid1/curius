@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getServiceSupabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +18,8 @@ export async function GET(
     if (!cleanUsername) {
       return NextResponse.json({ error: 'Username required' }, { status: 400 });
     }
+
+    const supabase = getServiceSupabase();
 
     const { data: inputUser, error: userErr } = await supabase
       .from('users')
