@@ -167,7 +167,9 @@ export default function TwinPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <Link
-                      href={`/u/${curator.username}`}
+                      href={`https://curius.app/${curator.username}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="font-serif text-[15px] font-medium text-ink hover:text-ink-light transition-colors"
                     >
                       {display}
