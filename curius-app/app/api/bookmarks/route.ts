@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { clampPagination } from '@/lib/api-pagination';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +13,7 @@ function filterNonChinese<T extends { title?: string | null }>(items: T[]): T[] 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
+    const { page, limit } = clampPagination(searchParams, { defaultLimit: 50 });
     const sortBy = searchParams.get('sortBy') || 'saves_count';
     const order = searchParams.get('order') || 'desc';
     const domain = searchParams.get('domain');

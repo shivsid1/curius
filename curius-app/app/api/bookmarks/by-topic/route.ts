@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { clampPagination } from '@/lib/api-pagination';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,8 +35,7 @@ export async function GET(request: NextRequest) {
     const topic = searchParams.get('topic');
     const subtopic = searchParams.get('subtopic');
     const sort = searchParams.get('sort') || 'recent'; // recent | popular | domain
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
+    const { page, limit } = clampPagination(searchParams, { defaultLimit: 20 });
     const offset = (page - 1) * limit;
 
     // No topic: return bookmarks with tags, sorted

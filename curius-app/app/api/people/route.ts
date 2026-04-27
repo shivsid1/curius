@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { clampPagination } from '@/lib/api-pagination';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,8 +24,7 @@ async function fetchTagsInBatches(bookmarkIds: number[]) {
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '30'), 100);
+    const { page, limit } = clampPagination(searchParams, { defaultLimit: 30 });
     const sort = searchParams.get('sort') || 'active';
 
     const offset = (page - 1) * limit;

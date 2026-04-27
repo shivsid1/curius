@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { clampPagination } from '@/lib/api-pagination';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,8 +15,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('q');
     const topic = searchParams.get('topic');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
+    const { page, limit } = clampPagination(searchParams, { defaultLimit: 50 });
 
     if (!query || query.trim().length === 0) {
       return NextResponse.json(
