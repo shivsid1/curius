@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { Compass, Globe, Layers, Map, Search, Users, Zap } from 'lucide-react';
+import { Compass, Globe, Layers, Map, Search, Sparkles, Zap } from 'lucide-react';
 import { Ornament } from '@/components/shared/Ornament';
 import { CreatorLetter } from '@/components/layout/CreatorLetter';
 
@@ -30,9 +30,9 @@ const tabs = [
     icon: Globe,
   },
   {
-    name: 'People',
-    href: '/discover/people',
-    icon: Users,
+    name: 'Twin',
+    href: '/discover/twin',
+    icon: Sparkles,
   },
   {
     name: 'Atlas',
@@ -115,7 +115,7 @@ export function DiscoverShell({ children }: DiscoverShellProps) {
                 <Link href="/discover/explore" className="block font-serif text-sm text-ink-light hover:text-ink transition-colors">Explore</Link>
                 <Link href="/discover/convergence" className="block font-serif text-sm text-ink-light hover:text-ink transition-colors">Trending</Link>
                 <Link href="/discover/sources" className="block font-serif text-sm text-ink-light hover:text-ink transition-colors">Roots</Link>
-                <Link href="/discover/people" className="block font-serif text-sm text-ink-light hover:text-ink transition-colors">People</Link>
+                <Link href="/discover/twin" className="block font-serif text-sm text-ink-light hover:text-ink transition-colors">Find your twin</Link>
               </div>
             </div>
 
