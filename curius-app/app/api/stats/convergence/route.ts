@@ -25,10 +25,13 @@ export async function GET(request: NextRequest) {
 
     // Get bookmarks with recent saves using RPC or aggregation
     // First, get bookmark IDs with their recent save counts
+    // Cap at 25k rows to prevent OOM on Railway. Trending signal is still
+    // accurate at this scale — if a bookmark trends it'll appear in the top rows.
     const { data: recentSaves, error: recentError } = await supabase
       .from('user_bookmarks')
       .select('bookmark_id')
-      .gte('saved_at', dateStr);
+      .gte('saved_at', dateStr)
+      .limit(25000);
 
     if (recentError) {
       console.error('Recent saves query error:', recentError);

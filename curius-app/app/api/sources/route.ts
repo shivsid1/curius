@@ -29,19 +29,10 @@ interface DomainAggregate {
   max_id: number;
 }
 
-// Aggregate domain stats at the DB layer via PostgREST's aggregate functions.
-// Replaces a JS-side aggregation that paginated through ~183k rows in 10k batches.
 async function fetchDomainAggregates(): Promise<DomainAggregate[]> {
-  // PostgREST returns one row per domain when aggregate functions are mixed
-  // with a non-aggregated column (implicit GROUP BY domain).
-  const { data, error } = await supabase
-    .from('bookmarks')
-    .select('domain, bookmark_count:id.count(), total_saves:saves_count.sum(), max_id:id.max()')
-    .not('domain', 'is', null)
-    .returns<DomainAggregate[]>();
-
+  const { data, error } = await supabase.rpc('get_domain_stats');
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as DomainAggregate[];
 }
 
 export async function GET(request: NextRequest) {

@@ -8,6 +8,19 @@ const MAX_REQUESTS = 60;
 
 const buckets = new Map<string, { count: number; resetAt: number }>();
 
+// Sweep expired entries every 5 min so the Map doesn't grow unboundedly
+// on Railway (persistent Node process). On Vercel Edge it resets on cold start.
+let lastCleanup = 0;
+const CLEANUP_INTERVAL_MS = 5 * 60_000;
+
+function maybeCleanup(now: number) {
+  if (now - lastCleanup < CLEANUP_INTERVAL_MS) return;
+  lastCleanup = now;
+  for (const [ip, bucket] of buckets) {
+    if (bucket.resetAt < now) buckets.delete(ip);
+  }
+}
+
 function getClientIp(req: NextRequest): string {
   const xff = req.headers.get('x-forwarded-for');
   if (xff) return xff.split(',')[0].trim();
@@ -17,6 +30,7 @@ function getClientIp(req: NextRequest): string {
 export function middleware(request: NextRequest) {
   const ip = getClientIp(request);
   const now = Date.now();
+  maybeCleanup(now);
   const bucket = buckets.get(ip);
 
   if (!bucket || bucket.resetAt < now) {

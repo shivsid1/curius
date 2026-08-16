@@ -10,7 +10,8 @@ export async function GET() {
     const { data: topicCounts, error: topicError } = await supabase
       .from('bookmark_tags_v2')
       .select('topic, subtopic')
-      .not('topic', 'is', null);
+      .not('topic', 'is', null)
+      .limit(500000);
 
     if (topicError) {
       console.error('Topics query error:', topicError);
