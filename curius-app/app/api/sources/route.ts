@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getServiceSupabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { clampPagination } from '@/lib/api-pagination';
 
 // Reads searchParams (page/limit/sort) so must be dynamic.
@@ -30,7 +30,7 @@ interface DomainAggregate {
 }
 
 async function fetchDomainAggregates(): Promise<DomainAggregate[]> {
-  const { data, error } = await getServiceSupabase().rpc('get_domain_stats');
+  const { data, error } = await supabase.rpc('get_domain_stats');
   if (error) throw error;
   return (data ?? []) as DomainAggregate[];
 }
