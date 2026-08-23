@@ -5,6 +5,7 @@ import { ConvergenceFilters } from '@/components/convergence/ConvergenceFilters'
 import { ConvergenceCard } from '@/components/convergence/ConvergenceCard';
 import { ConvergenceFeaturedCard } from '@/components/convergence/ConvergenceFeaturedCard';
 import { BookmarkListSkeleton } from '@/components/bookmarks/BookmarkSkeleton';
+import { DigestCallout } from '@/components/layout/DigestCallout';
 import { useConvergence, useInfiniteScroll } from '@/lib/hooks';
 
 export default function ConvergencePage() {
@@ -55,6 +56,7 @@ export default function ConvergencePage() {
               days={days}
             />
           )}
+          <DigestCallout />
           {bookmarks.slice(1).map((bookmark) => (
             <ConvergenceCard key={bookmark.id} bookmark={bookmark} />
           ))}

@@ -42,9 +42,6 @@ export function ReaderCard({ reader, matchLabel, className }: ReaderCardProps) {
       <p className="flex items-center gap-1.5 font-terminal text-xs text-ink-muted">
         <BookOpen className="w-3 h-3" />
         {reader.bookmark_count.toLocaleString()} bookmarks catalogued
-        {typeof reader.shared_bookmarks === 'number' && (
-          <span>&middot; {reader.shared_bookmarks} shared with you</span>
-        )}
       </p>
 
       {reader.sample_bookmarks && reader.sample_bookmarks.length > 0 && (

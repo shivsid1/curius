@@ -23,28 +23,8 @@ export default function AtlasPage() {
         <TasteMap />
       </section>
 
-      {/* Secondary: supporting evidence */}
-      <section>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div>
-            <h2 className="font-atlas text-xl text-ink mb-2">The Long Tail</h2>
-            <p className="font-serif text-sm text-ink-muted mb-6">
-              Most bookmarks are saved by a single person. The best finds live in the tail.
-            </p>
-            <LongTail />
-          </div>
-
-          <div>
-            <h2 className="font-atlas text-xl text-ink mb-2">Reading Zeitgeist</h2>
-            <p className="font-serif text-sm text-ink-muted mb-6">
-              How collective attention shifts month by month.
-            </p>
-            <Zeitgeist />
-          </div>
-        </div>
-      </section>
-
-      {/* Roots: the landmarks on the map */}
+      {/* Roots: the landmarks on the map. Directly under the map -- the map
+          shows the territory, this names the landmarks. */}
       <section>
         <header className="mb-6 max-w-2xl">
           <h2 className="font-atlas text-2xl text-ink mb-2">Roots</h2>
@@ -54,6 +34,27 @@ export default function AtlasPage() {
           </p>
         </header>
         <RootsSection />
+      </section>
+
+      {/* Commentary: supporting evidence */}
+      <section>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="min-w-0">
+            <h2 className="font-atlas text-xl text-ink mb-2">The Long Tail</h2>
+            <p className="font-serif text-sm text-ink-muted mb-6">
+              Most bookmarks are saved by a single person. The best finds live in the tail.
+            </p>
+            <LongTail />
+          </div>
+
+          <div className="min-w-0">
+            <h2 className="font-atlas text-xl text-ink mb-2">Reading Zeitgeist</h2>
+            <p className="font-serif text-sm text-ink-muted mb-6">
+              How collective attention shifts month by month.
+            </p>
+            <Zeitgeist />
+          </div>
+        </div>
       </section>
     </div>
   );

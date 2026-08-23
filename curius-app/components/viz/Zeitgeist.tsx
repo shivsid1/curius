@@ -16,13 +16,16 @@ interface MonthData {
 
 const TOPICS = ['Technology', 'Culture', 'Science', 'Business', 'Personal', 'Media'] as const;
 
+// Monochrome ink ramp -- the streamgraph reads like layered engraving washes,
+// consistent with the rest of the atlas. Bands are distinguished by lightness;
+// the legend and hover values carry exact identification.
 const TOPIC_COLORS: Record<string, string> = {
   Technology: '#1B2A4A',
-  Culture: '#8B4513',
-  Science: '#2E5A3A',
-  Business: '#B8860B',
-  Personal: '#6B3A6B',
-  Media: '#1B6B6B',
+  Culture: '#2E4470',
+  Science: '#45608F',
+  Business: '#5C7396',
+  Personal: '#7E8FAC',
+  Media: '#A3B0C4',
 };
 
 export function Zeitgeist() {
@@ -30,7 +33,9 @@ export function Zeitgeist() {
   const [data, setData] = useState<MonthData[] | null>(null);
   const [mode, setMode] = useState<'absolute' | 'percent'>('percent');
   const [hoveredMonth, setHoveredMonth] = useState<MonthData | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 350 });
+  // Start at 0 width and measure the container before first draw -- a fixed
+  // default overflows the grid column it renders in.
+  const [dimensions, setDimensions] = useState({ width: 0, height: 350 });
 
   useEffect(() => {
     fetch('/data/zeitgeist.json')
@@ -38,6 +43,8 @@ export function Zeitgeist() {
       .then(d => setData(d));
   }, []);
 
+  // Re-runs when data arrives: before that the component renders its loading
+  // state, the svg ref is null, and a mount-only measure would silently no-op.
   useEffect(() => {
     const handleResize = () => {
       const container = svgRef.current?.parentElement;
@@ -48,7 +55,7 @@ export function Zeitgeist() {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [data]);
 
   useEffect(() => {
     if (!data || !svgRef.current) return;

@@ -203,8 +203,8 @@ function UsernameTwinFinder() {
                     key={r.reader_no}
                     reader={r}
                     matchLabel={
-                      typeof r.affinity === 'number'
-                        ? `${Math.min(99, Math.round(r.affinity * 100))}% match`
+                      typeof r.shared_bookmarks === 'number'
+                        ? `${r.shared_bookmarks} in common`
                         : undefined
                     }
                   />
@@ -422,7 +422,7 @@ function TopicTwinFinder() {
                   reader={r}
                   matchLabel={
                     typeof r.match_count === 'number'
-                      ? `${r.match_count} overlaps`
+                      ? `${r.match_count} in your topics`
                       : undefined
                   }
                 />

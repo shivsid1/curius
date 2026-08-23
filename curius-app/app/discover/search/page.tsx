@@ -66,7 +66,7 @@ function SearchPageInner() {
             className="mx-auto mb-4"
           />
           <p className="font-serif text-ink-muted">
-            Search across {(177000).toLocaleString()}+ bookmarks.
+            Search everything readers have catalogued.
           </p>
         </div>
       ) : isLoading && bookmarks.length === 0 ? (

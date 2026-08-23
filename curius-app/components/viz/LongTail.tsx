@@ -31,7 +31,9 @@ export function LongTail() {
   const svgRef = useRef<SVGSVGElement>(null);
   const [data, setData] = useState<LongTailData | null>(null);
   const [selectedSaves, setSelectedSaves] = useState<number | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 350 });
+  // Start at 0 width and measure the container before first draw -- a fixed
+  // default overflows the grid column it renders in.
+  const [dimensions, setDimensions] = useState({ width: 0, height: 350 });
 
   useEffect(() => {
     fetch('/data/long-tail.json')
@@ -39,6 +41,8 @@ export function LongTail() {
       .then(d => setData(d));
   }, []);
 
+  // Re-runs when data arrives: before that the component renders its loading
+  // state, the svg ref is null, and a mount-only measure would silently no-op.
   useEffect(() => {
     const handleResize = () => {
       const container = svgRef.current?.parentElement;
@@ -49,7 +53,7 @@ export function LongTail() {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [data]);
 
   useEffect(() => {
     if (!data || !svgRef.current) return;

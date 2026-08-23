@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -8,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Compass, Layers, Map, Search, Users, Zap } from 'lucide-react';
 import { Ornament } from '@/components/shared/Ornament';
 import { CreatorLetter } from '@/components/layout/CreatorLetter';
+import { EmailSignup } from '@/components/layout/DigestCallout';
 
 const tabs = [
   { name: 'Explore', href: '/discover/explore', icon: Compass },
@@ -19,52 +19,6 @@ const tabs = [
 
 interface DiscoverShellProps {
   children: React.ReactNode;
-}
-
-function EmailSignup() {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'submitted'>('idle');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    // Placeholder: store locally until a real list provider is wired up.
-    try {
-      const existing = JSON.parse(localStorage.getItem('curius-atlas-digest-emails') || '[]') as string[];
-      if (!existing.includes(email)) existing.push(email);
-      localStorage.setItem('curius-atlas-digest-emails', JSON.stringify(existing));
-    } catch {
-      // ignore
-    }
-    setStatus('submitted');
-  };
-
-  if (status === 'submitted') {
-    return (
-      <p className="font-serif text-sm text-ink-light">
-        Thanks. The first digest will arrive on Sunday.
-      </p>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2 max-w-sm">
-      <input
-        type="email"
-        required
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="you@somewhere.com"
-        className="flex-1 bg-cream border border-cream-border rounded px-3 py-2 font-serif text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none focus:border-ink-light transition-colors"
-      />
-      <button
-        type="submit"
-        className="bg-ink text-cream px-4 py-2 rounded font-terminal text-xs tracking-wide hover:bg-ink-light transition-colors"
-      >
-        Subscribe
-      </button>
-    </form>
-  );
 }
 
 export function DiscoverShell({ children }: DiscoverShellProps) {
@@ -112,13 +66,14 @@ export function DiscoverShell({ children }: DiscoverShellProps) {
               title="Launch me somewhere"
               aria-label="Launch me somewhere"
               className={cn(
-                'ml-auto p-3 transition-colors',
+                'ml-auto flex items-center gap-2 px-4 py-3 text-sm transition-colors',
                 pathname.startsWith('/discover/launch')
-                  ? 'text-ink'
+                  ? 'text-ink font-medium'
                   : 'text-ink-muted hover:text-ink-light'
               )}
             >
               <Zap className="h-4 w-4" />
+              <span className="font-cartographic hidden md:inline">Launch</span>
             </Link>
           </div>
         </div>
