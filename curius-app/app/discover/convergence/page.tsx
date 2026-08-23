@@ -22,9 +22,10 @@ export default function ConvergencePage() {
   return (
     <div>
       {/* Page header */}
-      <h1 className="font-serif text-xl font-semibold text-ink mb-2">Convergence</h1>
+      <h1 className="font-serif text-xl font-semibold text-ink mb-2">Trending</h1>
       <p className="font-scholarly text-sm text-ink-muted mb-6">
-        Links saved independently by multiple curators. A signal worth paying attention to.
+        Links that several readers saved independently, without seeing each other do it.
+        That convergence is the strongest signal here.
       </p>
 
       {/* Filters */}

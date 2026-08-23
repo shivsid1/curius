@@ -16,7 +16,7 @@ interface BookmarkWithMeta extends Bookmark {
   bookmark_tags_v2?: BookmarkTag[];
   saved_by_users?: string[];
   first_saved_at?: string;
-  first_saved_by?: string;
+  first_reader_no?: number;
 }
 
 interface BookmarkCardProps {
@@ -104,6 +104,17 @@ export function BookmarkCard({
             </span>
           )}
 
+          {/* First reader: every bookmark is a door into someone's shelf */}
+          {bookmark.first_reader_no != null && (
+            <Link
+              href={`/reader/${bookmark.first_reader_no}`}
+              className="font-terminal text-ink-muted hover:text-ink transition-colors"
+              title={`Open Reader No. ${bookmark.first_reader_no}'s catalogue`}
+            >
+              by Reader N&ordm;&thinsp;{bookmark.first_reader_no}
+            </Link>
+          )}
+
           {/* Saves */}
           {bookmark.saves_count > 1 && (
             <span className="flex items-center gap-1 ml-auto font-terminal text-ink-muted">
@@ -113,12 +124,12 @@ export function BookmarkCard({
           )}
         </div>
 
-        {/* Expanded: anonymous curator count */}
+        {/* Expanded: anonymous reader count */}
         {variant === 'expanded' && showUsers && bookmark.saved_by_users && bookmark.saved_by_users.length > 0 && (
           <div className="mt-2 flex items-center gap-1.5">
             <Users className="w-3 h-3 text-ink-muted" />
             <span className="font-terminal text-xs text-ink-muted">
-              saved by {bookmark.saved_by_users.length} curator{bookmark.saved_by_users.length !== 1 ? 's' : ''}
+              saved by {bookmark.saved_by_users.length} reader{bookmark.saved_by_users.length !== 1 ? 's' : ''}
             </span>
           </div>
         )}

@@ -115,3 +115,47 @@ export interface SourceStats {
 export interface CuratorProfile extends User {
   top_topics: Array<{ topic: string; count: number }>;
 }
+
+// --- Pseudonymous reader identity -----------------------------------------
+// Readers are Curius curators presented as stable catalogue numbers
+// (Reader No. 4821). These shapes deliberately contain no name fields.
+
+export interface TasteFingerprintEntry {
+  topic: string;
+  percentage: number;
+}
+
+export interface ReaderProfile {
+  reader_no: number;
+  bookmark_count: number;
+  taste_fingerprint: TasteFingerprintEntry[] | null;
+  first_seen: string | null;
+  last_active: string | null;
+}
+
+export interface ReaderDirectoryEntry {
+  reader_no: number;
+  bookmark_count: number;
+  taste_fingerprint: TasteFingerprintEntry[] | null;
+  last_active: string | null;
+}
+
+export interface ReaderShelfBookmark {
+  id: number;
+  link: string;
+  title: string | null;
+  domain: string;
+  saves_count: number;
+  saved_at: string | null;
+  topic: string | null;
+}
+
+export interface ReaderMatch {
+  reader_no: number;
+  bookmark_count: number;
+  match_count?: number;
+  shared_bookmarks?: number;
+  affinity?: number;
+  taste_fingerprint: TasteFingerprintEntry[] | null;
+  sample_bookmarks?: Array<{ title: string | null; url: string; domain: string | null }>;
+}

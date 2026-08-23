@@ -10,24 +10,17 @@ const MAX_TOPICS = 10;
 const MAX_RESULTS = 5;
 // Cap how many tagged bookmark IDs we pull when matching the selected
 // topics. Keeps the candidate pool tractable without locking us out of
-// large topic clusters. We sample from the most popular bookmarks first.
+// large topic clusters.
 const MAX_SEED_BOOKMARKS = 1500;
-// Minimum overlap before a curator counts as a "cluster" candidate.
-const MIN_CLUSTER_MATCHES = 5;
-// How many candidate users to enrich with full topic + sample data.
-const MAX_CANDIDATES_TO_ENRICH = 12;
-// How many sample bookmarks to surface per cluster.
-const SAMPLE_BOOKMARK_COUNT = 4;
-// Floor on a curator's total saves, so we don't surface drive-by accounts.
+// Minimum overlap before a reader counts as a match candidate.
+const MIN_MATCHES = 5;
+// Floor on a reader's total saves, so we don't surface drive-by accounts.
 const MIN_BOOKMARK_COUNT = 25;
+// How many sample bookmarks to surface per matched reader.
+const SAMPLE_BOOKMARK_COUNT = 4;
 
 interface ByTasteRequest {
   topics?: unknown;
-}
-
-interface ClusterTopic {
-  topic: string;
-  percentage: number;
 }
 
 interface SampleBookmark {
@@ -36,11 +29,11 @@ interface SampleBookmark {
   domain: string | null;
 }
 
-interface ClusterResponse {
-  cluster_id: number;
+interface ReaderMatch {
+  reader_no: number;
   bookmark_count: number;
   match_count: number;
-  top_topics: ClusterTopic[];
+  taste_fingerprint: Array<{ topic: string; percentage: number }> | null;
   sample_bookmarks: SampleBookmark[];
 }
 
@@ -83,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     if (topics.length < MIN_TOPICS) {
       return NextResponse.json(
-        { error: `Pick at least ${MIN_TOPICS} topics to find a cluster` },
+        { error: `Pick at least ${MIN_TOPICS} topics to find your twins` },
         { status: 400 }
       );
     }
@@ -94,8 +87,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Split into top-level and subtopic buckets so we can build a clean OR
-    // query against bookmark_tags_v2 (instead of a giant string).
     const topLevel: string[] = [];
     const subtopicLevel: string[] = [];
     for (const t of topics) {
@@ -113,8 +104,6 @@ export async function POST(request: NextRequest) {
     }
 
     // 1) Find bookmark IDs matching any of the selected topics.
-    //    We pull the most popular tagged bookmarks first to bias toward
-    //    the canon of each topic and avoid long-tail noise.
     const seedIds = new Set<number>();
     const TAG_PAGE = 1000;
 
@@ -151,7 +140,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         topics_matched: topics,
         seed_bookmarks: 0,
-        results: [] as ClusterResponse[],
+        results: [] as ReaderMatch[],
       });
     }
 
@@ -170,7 +159,7 @@ export async function POST(request: NextRequest) {
       if (error) {
         console.error('user_bookmarks page error:', error);
         return NextResponse.json(
-          { error: 'Failed to compute clusters' },
+          { error: 'Failed to compute matches' },
           { status: 500 }
         );
       }
@@ -186,67 +175,65 @@ export async function POST(request: NextRequest) {
 
     const ranked = Object.entries(overlapCounts)
       .map(([id, count]) => ({ id: Number(id), match: count }))
-      .filter((r) => r.match >= MIN_CLUSTER_MATCHES)
+      .filter((r) => r.match >= MIN_MATCHES)
       .sort((a, b) => b.match - a.match)
-      .slice(0, MAX_CANDIDATES_TO_ENRICH);
+      .slice(0, MAX_RESULTS * 3); // headroom for the size filter below
 
     if (ranked.length === 0) {
       return NextResponse.json({
         topics_matched: topics,
         seed_bookmarks: seedBookmarkIds.length,
-        results: [] as ClusterResponse[],
+        results: [] as ReaderMatch[],
       });
     }
 
-    // 3) Filter out tiny accounts using bookmark_count from `users`.
+    // 3) Fetch pseudonymous identity for candidates. reader_no and the stored
+    //    taste_fingerprint replace the old per-candidate live aggregation.
+    //    No name fields are selected -- pseudonymity enforced at the query.
     const candidateIds = ranked.map((r) => r.id);
     const { data: candidateMeta, error: metaError } = await supabase
       .from('users')
-      .select('id, bookmark_count')
+      .select('id, reader_no, bookmark_count, taste_fingerprint')
       .in('id', candidateIds);
 
     if (metaError) {
       console.error('Candidate meta error:', metaError);
       return NextResponse.json(
-        { error: 'Failed to load curator metadata' },
+        { error: 'Failed to load reader metadata' },
         { status: 500 }
       );
     }
 
-    const metaById = new Map<number, number>(
-      (candidateMeta || []).map((u) => [u.id as number, (u.bookmark_count as number) || 0])
+    type Meta = {
+      id: number;
+      reader_no: number;
+      bookmark_count: number;
+      taste_fingerprint: Array<{ topic: string; percentage: number }> | null;
+    };
+    const metaById = new Map<number, Meta>(
+      ((candidateMeta || []) as Meta[]).map((u) => [u.id, u])
     );
 
     const sized = ranked
-      .map((r) => ({
-        id: r.id,
-        match: r.match,
-        bookmark_count: metaById.get(r.id) || 0,
-      }))
-      .filter((r) => r.bookmark_count >= MIN_BOOKMARK_COUNT)
+      .map((r) => ({ ...r, meta: metaById.get(r.id) }))
+      .filter((r): r is typeof r & { meta: Meta } =>
+        !!r.meta && r.meta.bookmark_count >= MIN_BOOKMARK_COUNT
+      )
       .slice(0, MAX_RESULTS);
 
     if (sized.length === 0) {
       return NextResponse.json({
         topics_matched: topics,
         seed_bookmarks: seedBookmarkIds.length,
-        results: [] as ClusterResponse[],
+        results: [] as ReaderMatch[],
       });
     }
 
-    // 4) Per-cluster enrichment: fetch each curator's bookmarks (capped),
-    //    join through bookmark_tags_v2 for topic distribution, and pick
-    //    sample bookmarks ranked by saves_count and topic alignment.
-    const clusters: ClusterResponse[] = [];
-
-    const seedSet = seedIds; // for fast lookup inside the loop
-    let clusterIndex = 0;
+    // 4) Sample bookmarks per matched reader: prefer saves inside the seed
+    //    set (the user's selected topics), ranked by global popularity.
+    const results: ReaderMatch[] = [];
 
     for (const candidate of sized) {
-      clusterIndex += 1;
-
-      // a) Pull this curator's bookmark IDs (capped — power-users have
-      //    thousands and we don't need them all to estimate distribution).
       const { data: ubRows } = await supabase
         .from('user_bookmarks')
         .select('bookmark_id')
@@ -258,44 +245,7 @@ export async function POST(request: NextRequest) {
         .map((r) => r.bookmark_id as number)
         .filter((id): id is number => id != null);
 
-      if (userBookmarkIds.length === 0) continue;
-
-      // b) Topic distribution across those bookmarks.
-      const topicCounts: Record<string, number> = {};
-      let totalTagged = 0;
-      let tagOffset = 0;
-      while (true) {
-        const { data: tagPage } = await supabase
-          .from('bookmark_tags_v2')
-          .select('topic')
-          .in('bookmark_id', userBookmarkIds)
-          .range(tagOffset, tagOffset + TAG_PAGE - 1);
-        if (!tagPage || tagPage.length === 0) break;
-        for (const row of tagPage) {
-          const t = row.topic as string | null;
-          if (!t) continue;
-          topicCounts[t] = (topicCounts[t] || 0) + 1;
-          totalTagged += 1;
-        }
-        if (tagPage.length < TAG_PAGE) break;
-        tagOffset += TAG_PAGE;
-        if (tagOffset > 5000) break;
-      }
-
-      const topTopics: ClusterTopic[] =
-        totalTagged > 0
-          ? Object.entries(topicCounts)
-              .map(([topic, count]) => ({
-                topic,
-                percentage: Math.round((count / totalTagged) * 1000) / 10,
-              }))
-              .sort((a, b) => b.percentage - a.percentage)
-              .slice(0, 3)
-          : [];
-
-      // c) Sample bookmarks: prefer ones inside the seed set (the user's
-      //    actual selected topics) and ranked by global saves_count.
-      const overlapWithSeed = userBookmarkIds.filter((id) => seedSet.has(id));
+      const overlapWithSeed = userBookmarkIds.filter((id) => seedIds.has(id));
       const sampleSourceIds =
         overlapWithSeed.length > 0 ? overlapWithSeed : userBookmarkIds.slice(0, 200);
 
@@ -306,18 +256,16 @@ export async function POST(request: NextRequest) {
         .order('saves_count', { ascending: false })
         .limit(SAMPLE_BOOKMARK_COUNT);
 
-      const sample: SampleBookmark[] = (sampleBookmarks || []).map((b) => ({
-        title: (b.title as string | null) || null,
-        url: b.link as string,
-        domain: (b.domain as string | null) || null,
-      }));
-
-      clusters.push({
-        cluster_id: clusterIndex,
-        bookmark_count: candidate.bookmark_count,
+      results.push({
+        reader_no: candidate.meta.reader_no,
+        bookmark_count: candidate.meta.bookmark_count,
         match_count: candidate.match,
-        top_topics: topTopics,
-        sample_bookmarks: sample,
+        taste_fingerprint: candidate.meta.taste_fingerprint,
+        sample_bookmarks: (sampleBookmarks || []).map((b) => ({
+          title: (b.title as string | null) || null,
+          url: b.link as string,
+          domain: (b.domain as string | null) || null,
+        })),
       });
     }
 
@@ -325,7 +273,7 @@ export async function POST(request: NextRequest) {
       {
         topics_matched: topics,
         seed_bookmarks: seedBookmarkIds.length,
-        results: clusters,
+        results,
       },
       {
         headers: { 'Cache-Control': 'private, no-store' },

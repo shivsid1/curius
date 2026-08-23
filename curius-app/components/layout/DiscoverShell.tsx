@@ -5,15 +5,15 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { Compass, Layers, Map, Search, Sparkles } from 'lucide-react';
+import { Compass, Layers, Map, Search, Users, Zap } from 'lucide-react';
 import { Ornament } from '@/components/shared/Ornament';
 import { CreatorLetter } from '@/components/layout/CreatorLetter';
 
 const tabs = [
   { name: 'Explore', href: '/discover/explore', icon: Compass },
   { name: 'Trending', href: '/discover/convergence', icon: Layers },
+  { name: 'Readers', href: '/discover/readers', icon: Users },
   { name: 'Atlas', href: '/discover/atlas', icon: Map },
-  { name: 'Twin', href: '/discover/twin', icon: Sparkles },
   { name: 'Search', href: '/discover/search', icon: Search },
 ];
 
@@ -77,7 +77,11 @@ export function DiscoverShell({ children }: DiscoverShellProps) {
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex items-center gap-0">
             {tabs.map((tab) => {
-              const isActive = pathname.startsWith(tab.href);
+              // Reader catalogue pages live under /reader/[n] but belong to
+              // the Readers tab conceptually.
+              const isActive =
+                pathname.startsWith(tab.href) ||
+                (tab.href === '/discover/readers' && pathname.startsWith('/reader'));
               const Icon = tab.icon;
 
               return (
@@ -100,6 +104,22 @@ export function DiscoverShell({ children }: DiscoverShellProps) {
                 </Link>
               );
             })}
+
+            {/* The cannon: fire me somewhere good. A toy, so it gets an icon,
+                not a tab. */}
+            <Link
+              href="/discover/launch"
+              title="Launch me somewhere"
+              aria-label="Launch me somewhere"
+              className={cn(
+                'ml-auto p-3 transition-colors',
+                pathname.startsWith('/discover/launch')
+                  ? 'text-ink'
+                  : 'text-ink-muted hover:text-ink-light'
+              )}
+            >
+              <Zap className="h-4 w-4" />
+            </Link>
           </div>
         </div>
         <Ornament variant="divider" className="px-4 md:px-6" />
@@ -131,7 +151,7 @@ export function DiscoverShell({ children }: DiscoverShellProps) {
                 The five most converged links each week.
               </h3>
               <p className="font-scholarly text-sm text-ink-muted mb-3">
-                One email, every Sunday. The bookmarks the most curators independently saved.
+                One email, every Sunday. The bookmarks the most readers independently saved.
               </p>
               <EmailSignup />
               <div className="mt-4 flex items-center gap-4 font-terminal text-xs text-ink-muted">

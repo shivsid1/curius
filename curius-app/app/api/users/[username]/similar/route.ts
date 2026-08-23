@@ -7,6 +7,10 @@ const MIN_SHARED = 3;
 const MAX_RESULTS = 20;
 const MAX_SEED_BOOKMARKS = 500;
 
+// Twin lookup by Curius username. The username is only used to find YOUR
+// account (self-lookup); every reader in the response -- including you -- is
+// identified solely by pseudonymous reader_no. No name fields ever leave
+// this route.
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ username: string }> }
@@ -21,7 +25,7 @@ export async function GET(
 
     const { data: inputUser, error: userErr } = await supabase
       .from('users')
-      .select('id, username, first_name, last_name, bookmark_count')
+      .select('id, reader_no, bookmark_count, taste_fingerprint')
       .ilike('username', cleanUsername)
       .maybeSingle();
 
@@ -32,7 +36,7 @@ export async function GET(
 
     if (!inputUser) {
       return NextResponse.json(
-        { error: 'No Curius user found with that username', username: cleanUsername },
+        { error: 'No Curius user found with that username' },
         { status: 404 }
       );
     }
@@ -48,9 +52,15 @@ export async function GET(
 
     const myBookmarkIds = (myBookmarks || []).map((b) => b.bookmark_id);
 
+    const selfProfile = {
+      reader_no: inputUser.reader_no,
+      bookmark_count: inputUser.bookmark_count,
+      taste_fingerprint: inputUser.taste_fingerprint,
+    };
+
     if (myBookmarkIds.length === 0) {
       return NextResponse.json({
-        user: inputUser,
+        reader: selfProfile,
         seedBookmarks: 0,
         results: [],
       });
@@ -87,24 +97,34 @@ export async function GET(
 
     if (ranked.length === 0) {
       return NextResponse.json({
-        user: inputUser,
+        reader: selfProfile,
         seedBookmarks: myBookmarkIds.length,
         results: [],
       });
     }
 
+    // Pseudonymous fields only -- no username/name columns selected.
     const { data: candidates } = await supabase
       .from('users')
-      .select('id, username, first_name, last_name, bookmark_count')
+      .select('id, reader_no, bookmark_count, taste_fingerprint')
       .in('id', ranked.map((r) => r.id));
 
-    const byId = new Map((candidates || []).map((u) => [u.id, u]));
+    type Candidate = {
+      id: number;
+      reader_no: number;
+      bookmark_count: number;
+      taste_fingerprint: Array<{ topic: string; percentage: number }> | null;
+    };
+    const byId = new Map(((candidates || []) as Candidate[]).map((u) => [u.id, u]));
+
     const results = ranked
       .map((r) => {
         const u = byId.get(r.id);
         if (!u) return null;
         return {
-          ...u,
+          reader_no: u.reader_no,
+          bookmark_count: u.bookmark_count,
+          taste_fingerprint: u.taste_fingerprint,
           shared_bookmarks: r.shared,
           // Lightweight Jaccard-like score: shared / sqrt(my * their)
           // Penalises mass-savers and self-promoters.
@@ -117,12 +137,12 @@ export async function GET(
       .filter((r): r is NonNullable<typeof r> => r !== null);
 
     return NextResponse.json({
-      user: inputUser,
+      reader: selfProfile,
       seedBookmarks: myBookmarkIds.length,
       results,
     });
   } catch (err) {
-    console.error('Similar users error:', err);
+    console.error('Similar readers error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@
 import { TasteMap } from '@/components/viz/TasteMap';
 import { LongTail } from '@/components/viz/LongTail';
 import { Zeitgeist } from '@/components/viz/Zeitgeist';
+import { RootsSection } from '@/components/sources/RootsSection';
 
 export default function AtlasPage() {
   return (
@@ -41,6 +42,18 @@ export default function AtlasPage() {
             <Zeitgeist />
           </div>
         </div>
+      </section>
+
+      {/* Roots: the landmarks on the map */}
+      <section>
+        <header className="mb-6 max-w-2xl">
+          <h2 className="font-atlas text-2xl text-ink mb-2">Roots</h2>
+          <p className="font-serif text-sm text-ink-muted">
+            The sources readers return to most. The map above shows the territory;
+            this names the landmarks.
+          </p>
+        </header>
+        <RootsSection />
       </section>
     </div>
   );
