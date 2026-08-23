@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ConvergenceFilters } from '@/components/convergence/ConvergenceFilters';
 import { ConvergenceCard } from '@/components/convergence/ConvergenceCard';
+import { ConvergenceFeaturedCard } from '@/components/convergence/ConvergenceFeaturedCard';
 import { BookmarkListSkeleton } from '@/components/bookmarks/BookmarkSkeleton';
 import { useConvergence, useInfiniteScroll } from '@/lib/hooks';
 
@@ -46,7 +47,14 @@ export default function ConvergencePage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {bookmarks.map((bookmark) => (
+          {bookmarks.length > 0 && (
+            <ConvergenceFeaturedCard
+              key={bookmarks[0].id}
+              bookmark={bookmarks[0]}
+              days={days}
+            />
+          )}
+          {bookmarks.slice(1).map((bookmark) => (
             <ConvergenceCard key={bookmark.id} bookmark={bookmark} />
           ))}
 

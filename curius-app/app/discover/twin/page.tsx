@@ -1,69 +1,88 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import Link from 'next/link';
+import { useState } from 'react';
 import Image from 'next/image';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import { Sparkles, ArrowRight, Check, Loader2 } from 'lucide-react';
+import { useTopics } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 
-interface SimilarUser {
-  id: number;
-  username: string;
-  first_name: string | null;
-  last_name: string | null;
+interface ClusterTopic {
+  topic: string;
+  percentage: number;
+}
+
+interface SampleBookmark {
+  title: string | null;
+  url: string;
+  domain: string | null;
+}
+
+interface ClusterResult {
+  cluster_id: number;
   bookmark_count: number;
-  shared_bookmarks: number;
-  affinity: number;
+  match_count: number;
+  top_topics: ClusterTopic[];
+  sample_bookmarks: SampleBookmark[];
 }
 
-interface SimilarResponse {
-  user: { username: string; first_name: string | null; last_name: string | null; bookmark_count: number };
-  seedBookmarks: number;
-  results: SimilarUser[];
+interface ByTasteResponse {
+  topics_matched: string[];
+  seed_bookmarks: number;
+  results: ClusterResult[];
 }
 
-function fullName(u: { first_name?: string | null; last_name?: string | null; username: string }) {
-  const name = [u.first_name, u.last_name].filter(Boolean).join(' ').trim();
-  return name || u.username;
-}
+const MIN_TOPICS = 3;
+const MAX_TOPICS = 10;
 
-const getAvatarColor = (name: string) => {
-  const colors = [
-    'bg-blue-50 text-blue-900',
-    'bg-indigo-50 text-indigo-900',
-    'bg-sky-50 text-sky-900',
-    'bg-slate-100 text-slate-800',
-    'bg-blue-100 text-blue-800',
-    'bg-indigo-100 text-indigo-800',
-  ];
-  const index = (name || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return colors[index % colors.length];
-};
+// A-Z labels keep the cluster names neutral and obviously anonymous.
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function clusterLabel(idx: number): string {
+  return `Curator ${ALPHABET[idx % 26]}`;
+}
 
 export default function TwinPage() {
-  const [input, setInput] = useState('');
-  const [data, setData] = useState<SimilarResponse | null>(null);
+  const { topics, isLoading: topicsLoading, error: topicsError } = useTopics();
+  const [selected, setSelected] = useState<string[]>([]);
+  const [data, setData] = useState<ByTasteResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [submittedUsername, setSubmittedUsername] = useState<string | null>(null);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    const username = input.trim().toLowerCase();
-    if (!username) return;
+  const totalSelectable = selected.length;
+  const canSubmit = totalSelectable >= MIN_TOPICS && !loading;
 
+  const toggle = (label: string) => {
+    setSelected((prev) => {
+      if (prev.includes(label)) return prev.filter((p) => p !== label);
+      if (prev.length >= MAX_TOPICS) return prev;
+      return [...prev, label];
+    });
+  };
+
+  const reset = () => {
+    setData(null);
+    setError(null);
+    setSelected([]);
+  };
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
     setLoading(true);
     setError(null);
     setData(null);
-    setSubmittedUsername(username);
-
     try {
-      const res = await fetch(`/api/users/${encodeURIComponent(username)}/similar`);
-      const body = await res.json();
+      const res = await fetch('/api/twin/by-taste', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topics: selected }),
+      });
+      const body = (await res.json()) as ByTasteResponse | { error?: string };
       if (!res.ok) {
-        setError(body.error || 'Something went wrong');
+        const message = (body as { error?: string }).error || 'Something went wrong';
+        setError(message);
       } else {
-        setData(body);
+        setData(body as ByTasteResponse);
       }
     } catch {
       setError('Network error');
@@ -73,15 +92,16 @@ export default function TwinPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       <div className="flex items-end justify-between gap-6 mb-6">
         <div>
           <h1 className="font-serif text-xl font-semibold text-ink mb-2 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-ink-light" />
-            Find your twins
+            Find your taste cluster
           </h1>
-          <p className="font-scholarly text-sm text-ink-muted">
-            Enter your Curius username to find curators with overlapping taste.
+          <p className="font-scholarly text-sm text-ink-muted max-w-xl">
+            Pick the topics that pull you in. We&apos;ll match you against anonymous
+            curator clusters whose libraries lean the same way.
           </p>
         </div>
         <Image
@@ -93,107 +113,224 @@ export default function TwinPage() {
         />
       </div>
 
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 mb-8">
-        <span className="font-terminal text-sm text-ink-muted">curius.app/</span>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="your-username"
-          autoComplete="off"
-          spellCheck={false}
-          className="flex-1 font-terminal text-sm bg-transparent border-b border-border/60 focus:border-ink outline-none py-2 px-1 placeholder:text-ink-muted/60"
-        />
-        <button
-          type="submit"
-          disabled={loading || !input.trim()}
-          className={cn(
-            'inline-flex items-center gap-1.5 px-4 py-2 rounded-md font-terminal text-sm transition-colors',
-            loading || !input.trim()
-              ? 'bg-cream-dark text-ink-muted cursor-not-allowed'
-              : 'bg-ink text-cream hover:bg-ink-light'
-          )}
-        >
-          {loading ? 'Finding...' : 'Find'}
-          {!loading && <ArrowRight className="w-3.5 h-3.5" />}
-        </button>
-      </form>
-
-      {error && (
-        <div className="border border-border rounded-md p-4 bg-cream-dark/30">
-          <p className="font-serif text-sm text-ink">{error}</p>
-          {error.toLowerCase().includes('no curius user') && (
-            <p className="font-terminal text-xs text-ink-muted mt-1">
-              Make sure you typed it exactly as it appears in your Curius profile URL.
+      {!data && (
+        <section className="mb-8">
+          <div className="flex items-baseline justify-between mb-3">
+            <p className="font-terminal text-xs uppercase tracking-wider text-ink-muted">
+              Step 1 &middot; Pick {MIN_TOPICS}&ndash;{MAX_TOPICS} topics
             </p>
+            <p className="font-terminal text-xs text-ink-muted">
+              {totalSelectable} / {MAX_TOPICS} selected
+            </p>
+          </div>
+
+          {topicsLoading && (
+            <p className="font-terminal text-sm text-ink-muted">Loading taxonomy&hellip;</p>
           )}
-        </div>
-      )}
+          {topicsError && (
+            <p className="font-terminal text-sm text-red-700">{topicsError}</p>
+          )}
 
-      {data && data.results.length === 0 && !error && (
-        <div className="border border-border rounded-md p-4 bg-cream-dark/30">
-          <p className="font-serif text-sm text-ink">
-            No close matches found for <span className="font-medium">@{submittedUsername}</span>.
-          </p>
-          <p className="font-terminal text-xs text-ink-muted mt-1">
-            {data.seedBookmarks === 0
-              ? "This account hasn't saved any bookmarks yet."
-              : 'Save a few more bookmarks on Curius and try again.'}
-          </p>
-        </div>
-      )}
-
-      {data && data.results.length > 0 && (
-        <>
-          <p className="font-terminal text-xs text-ink-muted mb-4 uppercase tracking-wider">
-            {data.results.length} curator{data.results.length === 1 ? '' : 's'} with overlapping taste
-            {' · '}seeded from {data.seedBookmarks} of @{data.user.username}&apos;s saves
-          </p>
-          <div>
-            {data.results.map((curator) => {
-              const display = fullName(curator);
-              const initial = display.charAt(0).toUpperCase();
-              return (
-                <div
-                  key={curator.id}
-                  className="group flex items-center gap-3 py-4 border-b border-border/50 last:border-b-0 hover:bg-cream-dark/40 transition-colors"
-                >
-                  <span
-                    className={cn(
-                      'inline-flex items-center justify-center w-9 h-9 rounded-full font-medium text-sm shrink-0',
-                      getAvatarColor(curator.username)
-                    )}
-                  >
-                    {initial}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`https://curius.app/${curator.username}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-serif text-[15px] font-medium text-ink hover:text-ink-light transition-colors"
+          {!topicsLoading && !topicsError && (
+            <div className="space-y-5">
+              {topics.map((topicGroup) => (
+                <div key={topicGroup.topic}>
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      type="button"
+                      onClick={() => toggle(topicGroup.topic)}
+                      className={cn(
+                        'inline-flex items-center gap-2 font-serif text-base font-semibold transition-colors',
+                        selected.includes(topicGroup.topic)
+                          ? 'text-ink'
+                          : 'text-ink hover:text-ink-light'
+                      )}
                     >
-                      {display}
-                    </Link>
-                    <span className="font-terminal text-xs text-ink-muted ml-2">
-                      @{curator.username}
+                      <span
+                        aria-hidden
+                        className={cn(
+                          'inline-block w-2 h-2 rounded-full transition-opacity',
+                          selected.includes(topicGroup.topic) ? 'opacity-100' : 'opacity-30'
+                        )}
+                        style={{ backgroundColor: topicGroup.color }}
+                      />
+                      {topicGroup.topic}
+                      {selected.includes(topicGroup.topic) && (
+                        <Check className="w-3.5 h-3.5 text-ink" />
+                      )}
+                    </button>
+                    <span className="font-terminal text-[10px] uppercase tracking-wider text-ink-muted">
+                      {topicGroup.count.toLocaleString()} saves
                     </span>
-                    <p className="font-terminal text-xs text-ink-muted mt-0.5">
-                      {curator.bookmark_count.toLocaleString()} saves total
-                    </p>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-terminal text-sm text-ink font-medium">
-                      {curator.shared_bookmarks} shared
-                    </p>
-                    <p className="font-terminal text-[10px] text-ink-muted uppercase tracking-wider">
-                      affinity {Math.round(curator.affinity * 1000) / 10}%
-                    </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {topicGroup.subtopics.map((s) => {
+                      const active = selected.includes(s.subtopic);
+                      const disabled = !active && totalSelectable >= MAX_TOPICS;
+                      return (
+                        <button
+                          key={`${topicGroup.topic}-${s.subtopic}`}
+                          type="button"
+                          onClick={() => toggle(s.subtopic)}
+                          disabled={disabled}
+                          className={cn(
+                            'inline-flex items-center gap-1 px-2.5 py-1 rounded-md font-terminal text-xs border transition-colors',
+                            active
+                              ? 'bg-ink text-cream border-ink'
+                              : disabled
+                              ? 'bg-cream-dark/40 text-ink-muted/60 border-border/40 cursor-not-allowed'
+                              : 'bg-cream text-ink border-border hover:border-ink/60'
+                          )}
+                        >
+                          {s.subtopic}
+                          <span className="text-[10px] opacity-60">{s.count}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+          )}
+
+          <div className="mt-6 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-4 py-2 rounded-md font-terminal text-sm transition-colors',
+                canSubmit
+                  ? 'bg-ink text-cream hover:bg-ink-light'
+                  : 'bg-cream-dark text-ink-muted cursor-not-allowed'
+              )}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Finding clusters&hellip;
+                </>
+              ) : (
+                <>
+                  Find your taste cluster
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
+            {totalSelectable > 0 && !loading && (
+              <button
+                type="button"
+                onClick={() => setSelected([])}
+                className="font-terminal text-xs text-ink-muted hover:text-ink underline-offset-2 hover:underline"
+              >
+                Clear selection
+              </button>
+            )}
+            {totalSelectable < MIN_TOPICS && (
+              <p className="font-terminal text-xs text-ink-muted">
+                Pick at least {MIN_TOPICS} to continue.
+              </p>
+            )}
           </div>
-        </>
+        </section>
+      )}
+
+      {error && (
+        <div className="border border-border rounded-md p-4 bg-cream-dark/30 mb-6">
+          <p className="font-serif text-sm text-ink">{error}</p>
+        </div>
+      )}
+
+      {data && (
+        <section>
+          <div className="flex items-baseline justify-between mb-4 gap-3 flex-wrap">
+            <p className="font-terminal text-xs text-ink-muted uppercase tracking-wider">
+              {data.results.length} cluster{data.results.length === 1 ? '' : 's'} matched
+              {' · '}
+              seeded from {data.seed_bookmarks.toLocaleString()} bookmarks across your
+              {' '}
+              {selected.length} topic{selected.length === 1 ? '' : 's'}
+            </p>
+            <button
+              type="button"
+              onClick={reset}
+              className="font-terminal text-xs text-ink-muted hover:text-ink underline-offset-2 hover:underline"
+            >
+              Pick different topics
+            </button>
+          </div>
+
+          {data.results.length === 0 && (
+            <div className="border border-border rounded-md p-6 bg-cream-dark/30">
+              <p className="font-serif text-sm text-ink">
+                No clusters lined up tightly with that mix.
+              </p>
+              <p className="font-terminal text-xs text-ink-muted mt-1">
+                Try swapping in a more specific subtopic, or broadening to a top-level topic.
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {data.results.map((cluster, idx) => (
+              <article
+                key={cluster.cluster_id}
+                className="border border-border rounded-lg p-5 bg-cream hover:bg-cream-dark/30 transition-colors"
+              >
+                <header className="flex items-start justify-between gap-4 mb-3">
+                  <div>
+                    <h2 className="font-serif text-lg font-semibold text-ink">
+                      {clusterLabel(idx)}
+                    </h2>
+                    <p className="font-terminal text-xs text-ink-muted mt-0.5">
+                      {cluster.bookmark_count.toLocaleString()} saves
+                      {' · '}
+                      {cluster.match_count.toLocaleString()} overlap with your picks
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap justify-end gap-1.5 max-w-[60%]">
+                    {cluster.top_topics.map((t) => (
+                      <span
+                        key={`${cluster.cluster_id}-${t.topic}`}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-terminal text-[11px] bg-cream-dark/60 text-ink border border-border/60"
+                      >
+                        {t.topic}
+                        <span className="text-ink-muted">{t.percentage}%</span>
+                      </span>
+                    ))}
+                  </div>
+                </header>
+
+                {cluster.sample_bookmarks.length > 0 && (
+                  <div className="mt-3 border-t border-border/50 pt-3">
+                    <p className="font-terminal text-[10px] uppercase tracking-wider text-ink-muted mb-2">
+                      What this cluster saves
+                    </p>
+                    <ul className="space-y-1.5">
+                      {cluster.sample_bookmarks.map((b) => (
+                        <li key={`${cluster.cluster_id}-${b.url}`} className="leading-snug">
+                          <Link
+                            href={b.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-scholarly text-sm text-ink hover:text-ink-light underline-offset-2 hover:underline"
+                          >
+                            {b.title || b.url}
+                          </Link>
+                          {b.domain && (
+                            <span className="font-terminal text-[11px] text-ink-muted ml-2">
+                              {b.domain}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

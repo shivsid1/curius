@@ -204,6 +204,16 @@
   .stagger-children > *:nth-child(3) { animation-delay: 120ms; }
   .stagger-children > *:nth-child(4) { animation-delay: 180ms; }
   .stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+
+  .animate-loader-rotate {
+    animation: loaderRotate 4s linear infinite;
+  }
+  .animate-loader-pulse {
+    animation: loaderPulse 1.6s ease-in-out infinite;
+  }
+  .animate-loader-oscillate {
+    animation: loaderOscillate 2.4s ease-in-out infinite;
+  }
 }
 
 @keyframes fadeIn {
@@ -220,4 +230,19 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes loaderRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes loaderPulse {
+  0%, 100% { opacity: 0.45; transform: scale(0.96); }
+  50%      { opacity: 1; transform: scale(1); }
+}
+
+@keyframes loaderOscillate {
+  0%, 100% { transform: rotate(-10deg); }
+  50%      { transform: rotate(10deg); }
 }

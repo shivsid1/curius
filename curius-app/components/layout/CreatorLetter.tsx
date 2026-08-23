@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
   Dialog,
@@ -8,8 +8,37 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
+const SEEN_KEY = 'curius-atlas-welcome-seen';
+
+function AtlasStamp() {
+  return (
+    <div className="flex justify-center mb-5">
+      <Image
+        src="/illustrations/seal.png"
+        alt=""
+        width={96}
+        height={96}
+        className="select-none"
+        style={{ transform: 'rotate(-6deg)' }}
+        priority
+      />
+    </div>
+  );
+}
+
 export function CreatorLetter() {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(SEEN_KEY)) {
+        setOpen(true);
+        localStorage.setItem(SEEN_KEY, '1');
+      }
+    } catch {
+      // localStorage blocked (private browsing, etc.) — silently skip
+    }
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -19,63 +48,43 @@ export function CreatorLetter() {
         </button>
       </DialogTrigger>
       <DialogContent className="max-w-xl bg-cream border-border p-0 overflow-hidden">
-        {/* Letter */}
-        <div className="px-8 pt-10 pb-8">
-          {/* Compass watermark */}
-          <div className="flex justify-center mb-6">
-            <Image
-              src="/illustrations/compass.png"
-              alt=""
-              width={64}
-              height={64}
-              className="opacity-60"
-            />
-          </div>
+        <div className="px-7 pt-6 pb-5">
+          <AtlasStamp />
 
-          <div className="space-y-5 font-serif text-[15px] text-ink-light leading-relaxed">
+          <div className="space-y-3 font-serif text-sm text-ink-light leading-relaxed">
             <p>
-              The internet is getting noisier. Algorithms feed us the same popular content.
-              AI-generated slop floods every feed. The signal-to-noise ratio gets worse every year.
+              The internet is expanding like the universe — and most of what fills the new space
+              is slop. Generated, optimized, published because it&apos;s cheap. The open web I
+              grew up reading is getting harder to find.
             </p>
 
             <p>
-              But somewhere, quietly, thousands of curious people are still finding remarkable things
-              and saving them to <a href="https://curius.app" target="_blank" rel="noopener noreferrer" className="text-ink underline underline-offset-2 hover:text-ink-light">Curius</a>.
-              Essays that change how you think. Papers that push a field forward.
-              Tools that deserve more attention. The kind of content that algorithms bury
-              because it doesn&apos;t optimize for clicks.
+              <a href="https://curius.app" target="_blank" rel="noopener noreferrer" className="text-ink underline underline-offset-2 hover:text-ink-light">
+                Curius
+              </a>{' '}
+              is a harbor in that. Six thousand people quietly saving things for themselves —
+              essays, papers, half-remembered ideas. Nobody coordinating. Just humans leaving
+              fingerprints on the corners of the internet that felt worth keeping.
             </p>
 
             <p>
-              Most of this lives in the long tail. Niche, obscure, saved by one or two people
-              who happened to stumble on it. Invisible to everyone else.
+              This is an atlas of those fingerprints. I hope you find something worth remembering.
             </p>
 
-            <p>
-              I built Curius Atlas to make that visible. To catalog what curious people actually read,
-              surface the patterns, and give the long tail a chance to be found. Not through an algorithm,
-              but through the collective taste of 5,000+ people who care enough to save what they find.
-            </p>
-
-            <p>
-              Think of it as an atlas of human curiosity. The internet isn&apos;t dead yet.
-              You just have to know where to look.
-            </p>
-
-            <p className="font-atlas text-ink text-lg pt-2">
-              Shiv
-            </p>
+            <div className="pt-1">
+              <p className="font-atlas text-ink text-base">Shivam</p>
+              <p className="font-terminal text-xs text-ink-muted">Made with love from Austin, TX</p>
+            </div>
           </div>
         </div>
 
-        {/* Bottom illustration */}
-        <div className="w-full -mb-1">
+        <div className="w-full overflow-hidden max-h-[110px] -mb-1">
           <Image
-            src="/illustrations/sf.png"
+            src="/illustrations/austin.png"
             alt=""
-            width={600}
-            height={200}
-            className="w-full opacity-40"
+            width={1024}
+            height={1024}
+            className="w-full object-cover object-center opacity-90"
           />
         </div>
       </DialogContent>

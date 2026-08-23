@@ -2,12 +2,57 @@
 
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowDownWideNarrow } from 'lucide-react';
+import { ArrowDownWideNarrow, Dices } from 'lucide-react';
+import Image from 'next/image';
 import { CategoryNav } from '@/components/categories/CategoryNav';
 import { BookmarkList } from '@/components/bookmarks/BookmarkList';
 import { BookmarkListSkeleton } from '@/components/bookmarks/BookmarkSkeleton';
 import { useTopics, useBookmarksByTopic } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
+
+function ShuffleButton() {
+  const [firing, setFiring] = useState(false);
+
+  const handleClick = async () => {
+    if (firing) return;
+    // Reserve the popup synchronously inside the user-gesture click handler
+    // so browsers don't block it after async work completes.
+    const popup = window.open('', '_blank');
+    setFiring(true);
+    try {
+      const res = await fetch('/api/bookmarks/random?minSaves=5');
+      const data = await res.json();
+      const link = data?.data?.link;
+      if (link && popup && !popup.closed) {
+        popup.location.href = link;
+      } else if (link) {
+        window.open(link, '_blank');
+      } else if (popup && !popup.closed) {
+        popup.close();
+      }
+    } catch {
+      if (popup && !popup.closed) popup.close();
+    } finally {
+      setFiring(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={firing}
+      title="Send me somewhere unexpected"
+      className={cn(
+        'flex items-center gap-1.5 px-3 py-1 font-terminal text-xs rounded-md transition-colors',
+        'border border-cream-border text-ink-muted hover:text-ink hover:border-ink-light',
+        firing && 'opacity-60 cursor-wait'
+      )}
+    >
+      <Dices className={cn('w-3.5 h-3.5', firing && 'animate-spin')} />
+      <span>Surprise me</span>
+    </button>
+  );
+}
 
 const SORT_OPTIONS = [
   { value: 'recent', label: 'Newest' },
@@ -56,6 +101,24 @@ function ExplorePageInner() {
     : selectedTopic ?? 'All Bookmarks';
 
   return (
+    <div>
+      {/* Page header */}
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <h1 className="font-serif text-xl font-semibold text-ink mb-1">Explore</h1>
+          <p className="font-scholarly text-sm text-ink-muted">
+            Browse what curious people are actually reading.
+          </p>
+        </div>
+        <Image
+          src="/illustrations/newton.png"
+          alt=""
+          width={110}
+          height={110}
+          className="hidden md:block -mb-2 opacity-90"
+        />
+      </div>
+
     <div className="flex gap-12">
       {/* Sidebar -- desktop only */}
       <aside className="hidden lg:block w-72 shrink-0">
@@ -136,11 +199,14 @@ function ExplorePageInner() {
               </button>
             ))}
           </div>
-          {pagination && (
-            <span className="font-terminal text-xs text-ink-muted">
-              {pagination.total.toLocaleString()} results
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {pagination && (
+              <span className="font-terminal text-xs text-ink-muted">
+                {pagination.total.toLocaleString()} results
+              </span>
+            )}
+            <ShuffleButton />
+          </div>
         </div>
 
         {/* Bookmark list */}
@@ -159,6 +225,7 @@ function ExplorePageInner() {
         )}
       </div>
 
+    </div>
     </div>
   );
 }
