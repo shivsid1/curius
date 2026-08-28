@@ -29,7 +29,9 @@ export function DiscoverShell({ children }: DiscoverShellProps) {
       {/* Tab Navigation */}
       <nav>
         <div className="container mx-auto px-4 md:px-6">
-          <div className="flex items-center gap-0">
+          {/* Icon-only below sm so all six items fit a phone; overflow-x-auto
+              as a safety net for very narrow viewports. */}
+          <div className="flex items-center gap-0 overflow-x-auto">
             {tabs.map((tab) => {
               // Reader catalogue pages live under /reader/[n] but belong to
               // the Readers tab conceptually.
@@ -49,8 +51,8 @@ export function DiscoverShell({ children }: DiscoverShellProps) {
                       : 'text-ink-muted hover:text-ink-light'
                   )}
                 >
-                  <Icon className="h-4 w-4" />
-                  <span className="font-cartographic">{tab.name}</span>
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="font-cartographic hidden sm:inline">{tab.name}</span>
 
                   {isActive && (
                     <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-ink rounded-full" />
@@ -72,7 +74,7 @@ export function DiscoverShell({ children }: DiscoverShellProps) {
                   : 'text-ink-muted hover:text-ink-light'
               )}
             >
-              <Zap className="h-4 w-4" />
+              <Zap className="h-4 w-4 shrink-0" />
               <span className="font-cartographic hidden md:inline">Launch</span>
             </Link>
           </div>

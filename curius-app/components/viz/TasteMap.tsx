@@ -30,7 +30,9 @@ export function TasteMap() {
   const [data, setData] = useState<TasteMapData | null>(null);
   const [hovered, setHovered] = useState<PackNode | null>(null);
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+  // Start at 0 width and measure the container once the svg exists -- a
+  // fixed default overflows narrow viewports.
+  const [dimensions, setDimensions] = useState({ width: 0, height: 500 });
 
   useEffect(() => {
     fetch('/data/taste-map.json')
@@ -38,6 +40,8 @@ export function TasteMap() {
       .then(d => setData(d));
   }, []);
 
+  // Re-runs when data arrives: before that the component renders its loading
+  // state, the svg ref is null, and a mount-only measure would silently no-op.
   useEffect(() => {
     const handleResize = () => {
       const container = svgRef.current?.parentElement;
@@ -51,12 +55,14 @@ export function TasteMap() {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [data]);
 
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
     const { width, height } = dimensions;
+    // Skip the pre-measure pass -- pack layout at 0 width produces NaN circles.
+    if (width <= 0) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
