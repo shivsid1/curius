@@ -1,7 +1,15 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { CONFIG } from './config';
 import { Logger } from './logger';
-import type { CuriusLink, DbUser, DbBookmark } from './types';
+import type { CuriusLink } from './types';
+
+function extractDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace('www.', '');
+  } catch {
+    return '';
+  }
+}
 
 export class SupabaseSync {
   private client: SupabaseClient;
@@ -45,36 +53,40 @@ export class SupabaseSync {
     return usernames;
   }
 
-  async getUsernamesByActivity(): Promise<string[]> {
-    const usernames: string[] = [];
+  async getUsersByActivity(): Promise<Array<{ username: string; lastOnline: string | null }>> {
+    const users: Array<{ username: string; lastOnline: string | null }> = [];
     let page = 0;
     const pageSize = 1000;
 
     // Try last_online first, fall back to bookmark_count if column doesn't exist
-    const sortColumn = await this.hasColumn('users', 'last_online') ? 'last_online' : 'bookmark_count';
+    const hasLastOnline = await this.hasColumn('users', 'last_online');
+    const sortColumn = hasLastOnline ? 'last_online' : 'bookmark_count';
+    const selectColumns = hasLastOnline ? 'username, last_online' : 'username';
     Logger.info(`Sorting users by: ${sortColumn}`);
 
     while (true) {
       const { data, error } = await this.client
         .from('users')
-        .select('username')
+        .select(selectColumns)
         .order(sortColumn, { ascending: false, nullsFirst: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);
 
       if (error) {
-        Logger.error('Failed to fetch usernames by activity', error as Error);
+        Logger.error('Failed to fetch users by activity', error as Error);
         break;
       }
 
       if (!data || data.length === 0) break;
 
-      usernames.push(...data.map((u) => u.username));
+      for (const row of data as unknown as Array<{ username: string; last_online?: string | null }>) {
+        users.push({ username: row.username, lastOnline: row.last_online ?? null });
+      }
       page++;
 
       if (data.length < pageSize) break;
     }
 
-    return usernames;
+    return users;
   }
 
   private async hasColumn(table: string, column: string): Promise<boolean> {
@@ -140,13 +152,7 @@ export class SupabaseSync {
   }
 
   async getOrCreateBookmark(link: CuriusLink): Promise<number | null> {
-    // Extract domain from URL
-    let domain = '';
-    try {
-      domain = new URL(link.link).hostname.replace('www.', '');
-    } catch {
-      domain = '';
-    }
+    const domain = extractDomain(link.link);
 
     // Try to find existing bookmark
     const { data: existing } = await this.client
@@ -186,6 +192,74 @@ export class SupabaseSync {
     }
 
     return data?.id || null;
+  }
+
+  /**
+   * Resolve existing bookmark ids for a set of links.
+   * One query per chunk instead of one per link.
+   */
+  async batchGetBookmarkIds(links: string[]): Promise<Map<string, number>> {
+    const found = new Map<string, number>();
+    if (links.length === 0) return found;
+
+    const chunkSize = 200;
+    for (let i = 0; i < links.length; i += chunkSize) {
+      const chunk = links.slice(i, i + chunkSize);
+      const { data, error } = await this.client
+        .from('bookmarks')
+        .select('id, link')
+        .in('link', chunk);
+
+      if (error) {
+        Logger.error('Batch bookmark lookup failed', error as Error);
+        continue;
+      }
+
+      for (const row of data ?? []) {
+        found.set(row.link, row.id);
+      }
+    }
+
+    return found;
+  }
+
+  /**
+   * Insert bookmarks that do not exist yet. Relies on the unique index on
+   * bookmarks.link.
+   *
+   * ignoreDuplicates is deliberate: an upsert that updates on conflict would
+   * reset saves_count to 1 on every row we re-encounter. Rows that already
+   * exist are skipped here and resolved by the caller's follow-up lookup.
+   */
+  async batchInsertBookmarks(links: CuriusLink[]): Promise<Map<string, number>> {
+    const inserted = new Map<string, number>();
+    if (links.length === 0) return inserted;
+
+    const rows = links.map((link) => ({
+      link: link.link,
+      title: link.title || null,
+      domain: extractDomain(link.link),
+      saves_count: 1,
+    }));
+
+    for (let i = 0; i < rows.length; i += CONFIG.SUPABASE_BATCH_SIZE) {
+      const chunk = rows.slice(i, i + CONFIG.SUPABASE_BATCH_SIZE);
+      const { data, error } = await this.client
+        .from('bookmarks')
+        .upsert(chunk, { onConflict: 'link', ignoreDuplicates: true })
+        .select('id, link');
+
+      if (error) {
+        Logger.error('Batch bookmark insert failed', error as Error);
+        continue;
+      }
+
+      for (const row of data ?? []) {
+        inserted.set(row.link, row.id);
+      }
+    }
+
+    return inserted;
   }
 
   async createUserBookmark(
