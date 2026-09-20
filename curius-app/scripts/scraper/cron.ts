@@ -9,24 +9,25 @@ import { SupabaseSync } from './supabase-sync';
 import { Categorizer } from './categorizer';
 import { Logger } from './logger';
 import { sleep } from './rate-limiter';
-import type { CuriusLink } from './types';
 
 /**
  * Cron-optimized sync entry point.
  * Designed for Railway cron (ephemeral filesystem, no persistent progress file).
  *
  * Strategy:
- * 1. Fetch all usernames from DB
- * 2. For each user, fetch only page 0 (most recent 30 bookmarks) from Curius API
- * 3. Upsert bookmarks + relationships (duplicates ignored)
- * 4. Discover new users from savedBy field
- * 5. Process discovered users the same way
- * 6. Classify all untagged bookmarks via GPT-4o-mini
+ * 1. Discover new users from the Curius directory and refresh last_online
+ * 2. Classify untagged bookmarks via GPT-4o-mini
+ * 3. Sync page 0 (most recent 30 bookmarks) for users active in the last 48h
  *
- * Runtime: ~60-90 min for 5k users (1 API call each at 2 req/sec)
+ * Phase 2 walks users ordered by last_online descending and stops at the
+ * activity cutoff. Previously it walked all ~6k users from the top and was
+ * cut off by MAX_RUNTIME_MS around 10% in, so the less active tail was never
+ * reached on any run.
  */
 
 const MAX_RUNTIME_MS = 50 * 60 * 1000; // 50 minutes safety cap
+const RECENT_WINDOW_HOURS = 48;
+const RECENT_WINDOW_MS = RECENT_WINDOW_HOURS * 60 * 60 * 1000;
 const startTime = Date.now();
 
 function timeLeft(): boolean {
@@ -123,33 +124,41 @@ async function main() {
     Logger.warn('Phase 1 skipped: OPENAI_API_KEY not set');
   }
 
-  // Phase 2: Sync bookmarks for all known users, most active first
-  const usernames = await supabaseSync.getUsernamesByActivity();
-  Logger.info(`Phase 2: Syncing ${usernames.length} users (sorted by activity, page 0 only)`);
+  // Phase 2: Sync bookmarks for users active inside the recency window.
+  // getUsersByActivity orders by last_online descending with nulls last, so
+  // the first user outside the window means every user after it is too.
+  const users = await supabaseSync.getUsersByActivity();
+  const cutoff = Date.now() - RECENT_WINDOW_MS;
+  Logger.info(`Phase 2: ${users.length} users known, syncing those active in the last ${RECENT_WINDOW_HOURS}h (page 0 only)`);
 
   let syncedUsers = 0;
   let newBookmarks = 0;
   let newRelationships = 0;
-  const discoveredUsers = new Set<string>();
-  const knownUsernames = new Set(usernames);
 
-  for (const username of usernames) {
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i];
+
     if (!timeLeft()) {
       Logger.warn(`Time limit reached after ${syncedUsers} users. Stopping sync phase.`);
       break;
     }
 
+    if (!user.lastOnline || Date.parse(user.lastOnline) < cutoff) {
+      Logger.info(`Reached the ${RECENT_WINDOW_HOURS}h activity cutoff after ${i} users. Skipping ${users.length - i} inactive.`);
+      break;
+    }
+
     try {
-      const result = await syncUserRecent(username, apiClient, supabaseSync, discoveredUsers, knownUsernames);
+      const result = await syncUserRecent(user.username, apiClient, supabaseSync);
       newBookmarks += result.bookmarks;
       newRelationships += result.relationships;
       syncedUsers++;
 
       if (syncedUsers % 50 === 0) {
-        Logger.info(`Progress: ${syncedUsers}/${usernames.length} users | +${newBookmarks} bookmarks | +${newRelationships} relationships | ${discoveredUsers.size} new users found`);
+        Logger.info(`Progress: ${syncedUsers} active users | +${newBookmarks} bookmarks | +${newRelationships} relationships`);
       }
     } catch (error) {
-      Logger.error(`Failed to sync ${username}`, error as Error);
+      Logger.error(`Failed to sync ${user.username}`, error as Error);
     }
 
     await sleep(500);
@@ -161,7 +170,7 @@ async function main() {
   const stats = await supabaseSync.getStats();
   Logger.info('=== Cron Sync Complete ===');
   Logger.info(`Total DB: ${stats.users} users, ${stats.bookmarks} bookmarks, ${stats.userBookmarks} relationships, ${stats.tags} tags`);
-  Logger.info(`This run: +${newBookmarks} bookmarks, +${newRelationships} relationships, ${discoveredUsers.size} new users discovered`);
+  Logger.info(`This run: +${newBookmarks} bookmarks, +${newRelationships} relationships`);
   Logger.info(`Runtime: ${((Date.now() - startTime) / 1000 / 60).toFixed(1)} minutes`);
 }
 
@@ -173,10 +182,8 @@ async function syncUserRecent(
   username: string,
   apiClient: CuriusApiClient,
   supabaseSync: SupabaseSync,
-  discoveredUsers: Set<string>,
-  knownUsernames: Set<string>,
 ): Promise<{ bookmarks: number; relationships: number }> {
-  let userId = await supabaseSync.getUserId(username);
+  const userId = await supabaseSync.getUserId(username);
   if (!userId) return { bookmarks: 0, relationships: 0 };
 
   const curiusUser = await apiClient.getUserByUsername(username);
@@ -184,22 +191,31 @@ async function syncUserRecent(
 
   // Only fetch page 0 (most recent 30 bookmarks)
   const { links } = await apiClient.getUserLinks(curiusUser.uid, username, 0);
+  if (links.length === 0) return { bookmarks: 0, relationships: 0 };
 
-  let bookmarks = 0;
-  let relationships = 0;
-  const batch: Array<{ userId: number; bookmarkId: number; savedAt: string }> = [];
+  // Resolve all 30 links in two or three queries. This used to be a
+  // select-then-insert per link, i.e. up to 60 sequential round trips per user.
+  const bookmarkIds = await supabaseSync.batchGetBookmarkIds(links.map((l) => l.link));
 
-  for (const link of links) {
-    // Discover new users from savedBy
-    if (link.savedBy) {
-      for (const saver of link.savedBy) {
-        if (saver.username && !knownUsernames.has(saver.username)) {
-          discoveredUsers.add(saver.username);
-        }
-      }
+  const missing = links.filter((l) => !bookmarkIds.has(l.link));
+  if (missing.length > 0) {
+    for (const [link, id] of await supabaseSync.batchInsertBookmarks(missing)) {
+      bookmarkIds.set(link, id);
     }
 
-    const bookmarkId = await supabaseSync.getOrCreateBookmark(link);
+    // Insert skips rows that already exist, so anything still unresolved lost
+    // a race with a concurrent writer. Look those up directly.
+    const unresolved = missing.filter((l) => !bookmarkIds.has(l.link)).map((l) => l.link);
+    if (unresolved.length > 0) {
+      for (const [link, id] of await supabaseSync.batchGetBookmarkIds(unresolved)) {
+        bookmarkIds.set(link, id);
+      }
+    }
+  }
+
+  const batch: Array<{ userId: number; bookmarkId: number; savedAt: string }> = [];
+  for (const link of links) {
+    const bookmarkId = bookmarkIds.get(link.link);
     if (!bookmarkId) continue;
 
     batch.push({
@@ -207,64 +223,12 @@ async function syncUserRecent(
       bookmarkId,
       savedAt: link.createdDate || new Date().toISOString(),
     });
-    bookmarks++;
   }
 
-  if (batch.length > 0) {
-    const result = await supabaseSync.batchUpsertUserBookmarks(batch);
-    relationships = result.created;
-  }
+  if (batch.length === 0) return { bookmarks: 0, relationships: 0 };
 
-  return { bookmarks, relationships };
-}
-
-/**
- * Full sync for newly discovered users -- all pages.
- */
-async function syncUserFull(
-  username: string,
-  apiClient: CuriusApiClient,
-  supabaseSync: SupabaseSync,
-): Promise<{ bookmarks: number; relationships: number }> {
-  let userId = await supabaseSync.getUserId(username);
-  if (!userId) {
-    userId = await supabaseSync.createUser(username);
-  }
-  if (!userId) return { bookmarks: 0, relationships: 0 };
-
-  const curiusUser = await apiClient.getUserByUsername(username);
-  if (!curiusUser) return { bookmarks: 0, relationships: 0 };
-
-  let bookmarks = 0;
-  let relationships = 0;
-  const batch: Array<{ userId: number; bookmarkId: number; savedAt: string }> = [];
-
-  for await (const links of apiClient.getAllUserLinks(curiusUser.uid, username)) {
-    for (const link of links) {
-      const bookmarkId = await supabaseSync.getOrCreateBookmark(link);
-      if (!bookmarkId) continue;
-
-      batch.push({
-        userId,
-        bookmarkId,
-        savedAt: link.createdDate || new Date().toISOString(),
-      });
-      bookmarks++;
-
-      if (batch.length >= 100) {
-        const result = await supabaseSync.batchUpsertUserBookmarks(batch);
-        relationships += result.created;
-        batch.length = 0;
-      }
-    }
-  }
-
-  if (batch.length > 0) {
-    const result = await supabaseSync.batchUpsertUserBookmarks(batch);
-    relationships += result.created;
-  }
-
-  return { bookmarks, relationships };
+  const result = await supabaseSync.batchUpsertUserBookmarks(batch);
+  return { bookmarks: batch.length, relationships: result.created };
 }
 
 // Run
