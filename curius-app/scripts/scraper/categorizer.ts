@@ -1,6 +1,33 @@
-import { formatTaxonomyForPrompt, getAllCategories } from './taxonomy';
+import Anthropic from '@anthropic-ai/sdk';
+import { formatTaxonomyForPrompt, getAllCategories, getAllSubcategories, isValidPair } from './taxonomy';
 import { Logger } from './logger';
-import { RateLimiter, withRetry } from './rate-limiter';
+import { RateLimiter } from './rate-limiter';
+
+// Overridable so the model can be changed without a deploy.
+const MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-5';
+
+// The taxonomy is enforced by the response schema rather than by prompt text,
+// so the model cannot return a category that doesn't exist.
+const CLASSIFICATION_SCHEMA = {
+  type: 'object',
+  properties: {
+    classifications: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          category: { type: 'string', enum: getAllCategories() },
+          subcategory: { type: 'string', enum: getAllSubcategories() },
+        },
+        required: ['id', 'category', 'subcategory'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['classifications'],
+  additionalProperties: false,
+} as const;
 
 interface CategoryResult {
   category: string;
@@ -18,13 +45,18 @@ interface LinkToClassify {
 export class Categorizer {
   private rateLimiter: RateLimiter;
   private apiKey: string;
+  private client: Anthropic | null = null;
 
   constructor() {
-    this.apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || '';
+    this.apiKey = process.env.ANTHROPIC_API_KEY || '';
     if (!this.apiKey) {
-      Logger.warn('OPENAI_API_KEY not set - categorization disabled');
+      Logger.warn('ANTHROPIC_API_KEY not set - categorization disabled');
+    } else {
+      // The SDK reads ANTHROPIC_API_KEY itself and retries 429/5xx twice.
+      this.client = new Anthropic();
+      Logger.info(`Categorizer using ${MODEL}`);
     }
-    this.rateLimiter = new RateLimiter(1); // 1 req/sec for OpenAI
+    this.rateLimiter = new RateLimiter(2);
   }
 
   isEnabled(): boolean {
@@ -92,35 +124,35 @@ export class Categorizer {
 
     try {
       const response = await this.rateLimiter.execute(() =>
-        withRetry(async () => {
-          const res = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${this.apiKey}`,
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o-mini',
-              messages: [{ role: 'user', content: prompt }],
-              temperature: 0.2,
-              max_tokens: 1000,
-            }),
-            signal: AbortSignal.timeout(30000),
-          });
-
-          if (!res.ok) {
-            const body = await res.text();
-            throw new Error(`OpenAI API error: ${res.status} - ${body}`);
-          }
-
-          return res.json();
+        this.client!.messages.create({
+          model: MODEL,
+          max_tokens: 2000,
+          messages: [{ role: 'user', content: prompt }],
+          output_config: {
+            // Classification is mechanical; low effort keeps token spend down.
+            effort: 'low',
+            format: { type: 'json_schema', schema: CLASSIFICATION_SCHEMA },
+          },
         })
       );
 
-      const content = response.choices?.[0]?.message?.content || '';
-      const parsed = this.parseResponse(content, links);
+      if (response.stop_reason === 'refusal') {
+        Logger.warn('Classification refused by safety classifier - skipping batch');
+        return results;
+      }
+      if (response.stop_reason === 'max_tokens') {
+        Logger.warn('Classification hit max_tokens - batch may be truncated');
+      }
 
-      for (const [id, result] of parsed) {
+      const u = response.usage;
+      Logger.info(`Classified ${links.length} links | ${u.input_tokens} in / ${u.output_tokens} out tokens`);
+
+      const text = response.content
+        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+        .map((b) => b.text)
+        .join('');
+
+      for (const [id, result] of this.parseResponse(text)) {
         results.set(id, result);
       }
     } catch (error) {
@@ -156,37 +188,30 @@ ${taxonomy}
 LINKS:
 ${linksText}
 
-Return ONLY valid JSON array with this exact format:
-[
-  {"id": 123, "category": "Technology", "subcategory": "AI & Machine Learning"},
-  {"id": 456, "category": "Business", "subcategory": "Startups & Founders"}
-]
-
 RULES:
-- Choose the SINGLE BEST matching category and subcategory
-- Use EXACT category/subcategory names from the taxonomy
-- If unsure, pick the closest match - never leave blank
-- Return valid JSON only, no other text`;
+- Choose the SINGLE BEST matching category and subcategory for each link
+- The subcategory must belong to the category you pick
+- Return one entry per link, echoing its ID
+- If unsure, pick the closest match - never leave blank`;
   }
 
-  private parseResponse(content: string, links: LinkToClassify[]): Map<number, CategoryResult> {
+  /**
+   * The response schema already guarantees valid JSON and that both category
+   * and subcategory come from the taxonomy. What it can't express is that a
+   * subcategory must belong to its category, so that pairing is checked here.
+   */
+  private parseResponse(content: string): Map<number, CategoryResult> {
     const results = new Map<number, CategoryResult>();
-    const validCategories = getAllCategories();
+    if (!content.trim()) return results;
 
     try {
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        Logger.warn('No JSON array found in response');
-        return results;
-      }
+      const parsed = JSON.parse(content) as {
+        classifications?: Array<{ id: number; category: string; subcategory: string }>;
+      };
 
-      const parsed = JSON.parse(jsonMatch[0]);
-
-      for (const item of parsed) {
-        if (!item.id || !item.category || !item.subcategory) continue;
-
-        if (!validCategories.includes(item.category)) {
-          Logger.warn(`Invalid category: ${item.category}`);
+      for (const item of parsed.classifications ?? []) {
+        if (!isValidPair(item.category, item.subcategory)) {
+          Logger.warn(`Mismatched pair: ${item.category} / ${item.subcategory} (id ${item.id})`);
           continue;
         }
 
