@@ -28,6 +28,7 @@
     "tag:brev": "node scripts/tag-brev-gpu.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.127.0",
     "@supabase/supabase-js": "^2.104.1",
     "@types/d3": "^7.4.3",
     "class-variance-authority": "^0.7.1",

@@ -70,6 +70,15 @@ export function getSubcategories(mainCategory: MainCategory): readonly string[] 
   return TAXONOMY[mainCategory]?.subcategories || [];
 }
 
+export function getAllSubcategories(): string[] {
+  return Object.values(TAXONOMY).flatMap((data) => [...data.subcategories]);
+}
+
+export function isValidPair(category: string, subcategory: string): boolean {
+  const entry = TAXONOMY[category as MainCategory];
+  return !!entry && (entry.subcategories as readonly string[]).includes(subcategory);
+}
+
 export function formatTaxonomyForPrompt(): string {
   return Object.entries(TAXONOMY)
     .map(([main, data]) => `${main}: ${data.subcategories.join(', ')}`)

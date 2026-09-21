@@ -121,7 +121,7 @@ async function main() {
 
     Logger.info(`Phase 1 complete: ${totalCategorized} bookmarks classified`);
   } else {
-    Logger.warn('Phase 1 skipped: OPENAI_API_KEY not set');
+    Logger.warn('Phase 1 skipped: ANTHROPIC_API_KEY not set');
   }
 
   // Phase 2: Sync bookmarks for users active inside the recency window.
